@@ -1,9 +1,11 @@
+from csvIO import *
 from parseCSV import *
 from typing import Dict, List
 
 
 def main():
-    data: List[str] = getData(
+    writeData()
+    data: List[str] = readData(
         "data/communities_-1__with_distance_multi-level_geonames_cities_7.csv"
     )
     l1Communities: Dict[int, List[List[str]]] = getCommunities(data, 1)

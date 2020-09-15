@@ -1,6 +1,5 @@
-import csv
 from typing import List, Dict
-
+import csv
 
 def getMaxInCol(col: int) -> int:
     """
@@ -27,7 +26,6 @@ def getMaxInCol(col: int) -> int:
                 maxComm1 = comm1
         return maxComm1
 
-
 def getCommunities(data: List[str], commLevel: int) -> Dict[int, List[List[str]]]:
     """
     Creates a mapping that assigns to each community the location entries belonging to it.
@@ -52,12 +50,3 @@ def getCommunities(data: List[str], commLevel: int) -> Dict[int, List[List[str]]
             row
         )  # Retrieve all communities on commLevel if commId is not ommited
     return communities
-
-
-def getData(path) -> List[str]:
-    with open(path, newline="", encoding="utf-8",) as csvfile:
-        csvReader = csv.reader(csvfile, delimiter=",")
-        data: List[str] = []
-        for row in csvReader:
-            data.append(row)
-        return data
