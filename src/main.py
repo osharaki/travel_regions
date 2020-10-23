@@ -40,19 +40,21 @@ def main():
     polygon = generateConvexHull(l2MembersLatinAmerica[:200])
     plot_polygon(polygon, fig)
     pl.show() """
-
-    polygon = generateConcaveHull(l2MembersLatinAmerica[:50])
-    # coordinates = [list(coordinate) for coordinate in list(zip(*polygon.exterior.coords.xy))]
-    polygonCoordinates = list(zip(*polygon.exterior.coords.xy))
-    nodesInPolygon = l2MembersLatinAmerica[:50]
+    polygons = []
+    communities = []
+    for community in list(l2CommunitiesLatinAmerica.values())[:3]:
+        communityNodes = [(float(point[-3]), float(point[-2])) for point in community]
+        polygon = generateConcaveHull(communityNodes)
+        polygonCoordinates = list(zip(*polygon.exterior.coords.xy))
+        polygons.append(polygonCoordinates)
+        communities.append(communityNodes)
     clusterToJSON(
-        [polygonCoordinates],
-        [nodesInPolygon],
+        polygons,
+        communities,
         "C:/Users/osharaki/OneDrive - Technische Universitat Munchen/programming_misc/WebDev/Leaflet_Sandbox/data.json",
     )
-    # print(coordinates)
-    return
 
+    return
     writeData: List[List[str]] = [
         memberAtId
         for l2CommunityId in L2CommunitesGlobal
