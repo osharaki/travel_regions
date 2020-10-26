@@ -6,6 +6,7 @@ from shpIO import *
 from jsonIO import *
 from parseCSV import *
 from boundary import *
+from outliers import *
 
 
 def main():
@@ -42,15 +43,42 @@ def main():
     pl.show() """
     polygons = []
     communities = []
+    outliers = []
+    # centroids = []
     for community in list(l2CommunitiesLatinAmerica.values())[:3]:
-        communityNodes = [(float(point[-3]), float(point[-2])) for point in community]
+        communityNodes: List[Tuple[float, float]] = [
+            [float(point[-3]), float(point[-2])] for point in community
+        ]
+
+        # centroid = findCentroid(communityNodes)
+        outliersZScore = detectOutliersZScore(communityNodes, threshold=3)
+        if(len(outliersZScore) > 1):
+            outlierIndices, _ = zip(*outliersZScore)
+        elif(len(outliersZScore) > 0):
+            outlierIndices = [outliersZScore[0][0]]
+        else:
+            outlierIndices = []
+
+        nonoutliers = [
+            node[1]
+            for node in enumerate(communityNodes)
+            if node[0] not in outlierIndices
+        ]
         polygon = generateConcaveHull(communityNodes)
-        polygonCoordinates = list(zip(*polygon.exterior.coords.xy))
-        polygons.append(polygonCoordinates)
-        communities.append(communityNodes)
+        # polygon = generateConcaveHull(nonoutliers)
+
+        # polygon = generateConvexHull(communityNodes)
+        # polygon = generateConvexHull(nonoutliers)
+
+        polygons.append(polygon)
+
+        # communities.append(communityNodes)
+        communities.append(nonoutliers)
+        outliers.append([communityNodes[index] for index in outlierIndices])
+        # centroids.append(centroid)
+
     clusterToJSON(
-        polygons,
-        communities,
+        {"polygons": polygons, "communities": communities, "outliers": outliers},
         "C:/Users/osharaki/OneDrive - Technische Universitat Munchen/programming_misc/WebDev/Leaflet_Sandbox/data.json",
     )
 
