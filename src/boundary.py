@@ -16,11 +16,12 @@ def generateConcaveHull(points: List[Tuple[float, float]], visualize=False):
     print(f'Elapsed time: {end-start}')
     if(visualize):
         pl.show()
-    return alpha_shape
+    return list(zip(*alpha_shape.exterior.coords.xy))
 
 def generateConvexHull(points: List[Tuple[float, float]]):
     point_collection = geometry.MultiPoint(points)
-    return point_collection.convex_hull
+    pp = PolygonPatch(point_collection.convex_hull)
+    return pp._path.vertices.tolist()
 
 
 def plot_polygon(polygon, figure):
