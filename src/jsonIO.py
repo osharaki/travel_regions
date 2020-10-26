@@ -1,10 +1,9 @@
+from typing import Dict, List, Tuple
 import json
 
-def clusterToJSON(polygons, clusters, target):
-    data = {}
-    data['polygons'] = polygons
-    data['clusters'] = clusters
-    with open(target, 'w') as f:
+
+def clusterToJSON(data: Dict[str, List[List[float]]], target):
+    with open(target, "w") as f:
         json.dump(data, f, indent=4)
     """
     {
