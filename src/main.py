@@ -1,6 +1,8 @@
-from typing import Dict, List, Tuple
 import matplotlib.pyplot as pl
+import numpy as np
 
+from shapely.affinity import scale
+from typing import Dict, List, Tuple
 from csvIO import *
 from shpIO import *
 from jsonIO import *
@@ -52,9 +54,9 @@ def main():
 
         # centroid = findCentroid(communityNodes)
         outliersZScore = detectOutliersZScore(communityNodes, threshold=3)
-        if(len(outliersZScore) > 1):
+        if len(outliersZScore) > 1:
             outlierIndices, _ = zip(*outliersZScore)
-        elif(len(outliersZScore) > 0):
+        elif len(outliersZScore) > 0:
             outlierIndices = [outliersZScore[0][0]]
         else:
             outlierIndices = []
@@ -64,14 +66,48 @@ def main():
             for node in enumerate(communityNodes)
             if node[0] not in outlierIndices
         ]
-        polygon = generateConcaveHull(communityNodes)
+        # polygon = generateConcaveHull(communityNodes)
         # polygon = generateConcaveHull(nonoutliers)
 
         # polygon = generateConvexHull(communityNodes)
         # polygon = generateConvexHull(nonoutliers)
 
-        polygons.append(polygon)
+        """ shapefile = gpd.read_file(
+            os.path.join(
+                "c://",
+                "users",
+                "osharaki",
+                "desktop",
+                "tmp",
+                "geo",
+                "ne_110m_geography_regions_polys",
+                "ne_110m_geography_regions_polys.shp",
+            )
+        )
+        containingArea = shapefile[shapefile["name_en"] == "South America"]
+        # containingArea = containingArea.to_crs(epsg=3395)
+        containingAreaShape = containingArea.iloc[0].geometry
+        containingAreaShape = transform(
+            lambda x, y: (y, x), containingAreaShape
+        )  # flipping coordinates
+        polygon = list(zip(*containingAreaShape.exterior.coords.xy)) """
 
+        containingAreaShape = readGeoJSON(
+            os.path.join(
+                "c://",
+                "users",
+                "osharaki",
+                "desktop",
+                "tmp",
+                "geo",
+                "SouthAmerica.geojson",
+            )
+        )
+        polygon = list(map(lambda point: [point[1],point[0]], containingAreaShape['geometry']['coordinates'][0])) # flipping coordinates
+        
+        # polygon = generateConstrainedVoronoiDiagram(nonoutliers, containingAreaShape)
+       
+        polygons.append(polygon)
         # communities.append(communityNodes)
         communities.append(nonoutliers)
         outliers.append([communityNodes[index] for index in outlierIndices])
