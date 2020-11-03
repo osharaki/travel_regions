@@ -22,38 +22,16 @@ def main():
     l2CommunitiesLatinAmerica: Dict[int, List[List[str]]] = getCommunities(
         l1Communities[0], 2
     )  # L2 regions in SA (~countries)
-    L2CommunitesGlobal: Dict[int, List[List[str]]] = getCommunities(
-        [
-            location
-            for locationsInContinent in l1Communities.values()
-            for location in locationsInContinent
-        ],
-        2,
-    )
-    l2MembersLatinAmerica: List[List[str]] = [
-        (float(l2MemberAtId[-3]), float(l2MemberAtId[-2]))
-        for l2CommunityId in l2CommunitiesLatinAmerica
-        for l2MemberAtId in l2CommunitiesLatinAmerica[l2CommunityId]
-    ]
 
-    """ x: float
-    y: float 
-    x, y = zip(*l2MembersLatinAmerica[:200]) 
-    fig = pl.figure(figsize=(10,10))
-    pl.scatter(x, y)
-    polygon = generateConvexHull(l2MembersLatinAmerica[:200])
-    plot_polygon(polygon, fig)
-    pl.show() """
     polygons = []
     communities = []
+    allNonoutlierClusters = []
     outliers = []
-    # centroids = []
     for community in list(l2CommunitiesLatinAmerica.values())[:3]:
         communityNodes: List[Tuple[float, float]] = [
             [float(point[-3]), float(point[-2])] for point in community
         ]
 
-        # centroid = findCentroid(communityNodes)
         outliersZScore = detectOutliersZScore(communityNodes, threshold=3)
         if len(outliersZScore) > 1:
             outlierIndices, _ = zip(*outliersZScore)
@@ -67,32 +45,9 @@ def main():
             for node in enumerate(communityNodes)
             if node[0] not in outlierIndices
         ]
-        # polygon = generateConcaveHull(communityNodes)
-        # polygon = generateConcaveHull(nonoutliers)
-
-        # polygon = generateConvexHull(communityNodes)
-        # polygon = generateConvexHull(nonoutliers)
-
-        """ shapefile = gpd.read_file(
-            os.path.join(
-                "c://",
-                "users",
-                "osharaki",
-                "desktop",
-                "tmp",
-                "geo",
-                "ne_110m_geography_regions_polys",
-                "ne_110m_geography_regions_polys.shp",
-            )
-        )
-        containingArea = shapefile[shapefile["name_en"] == "South America"]
-        # containingArea = containingArea.to_crs(epsg=3395)
-        containingAreaShape = containingArea.iloc[0].geometry
-        containingAreaShape = transform(
-            lambda x, y: (y, x), containingAreaShape
-        )  # flipping coordinates
-        polygon = list(zip(*containingAreaShape.exterior.coords.xy)) """
-
+        allNonoutlierClusters.append(nonoutliers)
+        communities.append(nonoutliers)
+        outliers.append([communityNodes[index] for index in outlierIndices])
         containingAreaShape = readGeoJSON(
             os.path.join(
                 "c://",
@@ -104,17 +59,27 @@ def main():
                 "SouthAmerica.geojson",
             )
         )
-        containingAreaShape = list(map(lambda point: [point[1],point[0]], containingAreaShape['geometry']['coordinates'][0])) # flipping coordinates for Leaflet compatibility
-        
-        containingAreaShape = Polygon(containingAreaShape)
-        poly_shapes, pts, poly_to_pt_assignments = generateConstrainedVoronoiDiagram(nonoutliers, containingAreaShape)
-        polygon = [list(zip(*polyshape.exterior.coords.xy)) for polyshape in poly_shapes]
-        
-        polygons.append(polygon)
-        # communities.append(communityNodes)
-        communities.append(nonoutliers)
-        outliers.append([communityNodes[index] for index in outlierIndices])
-        # centroids.append(centroid)
+
+    containingAreaShape = list(
+        map(
+            lambda point: [point[1], point[0]],
+            containingAreaShape["geometry"]["coordinates"][0],
+        )
+    )  # flipping coordinates for Leaflet compatibility
+
+    containingAreaShape = Polygon(containingAreaShape)
+    nonoutliersJoined = [
+        nonoutlier
+        for nonoutlierCluster in allNonoutlierClusters
+        for nonoutlier in nonoutlierCluster
+    ]
+    poly_shapes, pts, poly_to_pt_assignments = generateConstrainedVoronoiDiagram(
+        nonoutliersJoined, containingAreaShape
+    )
+    for i, c in enumerate(allNonoutlierClusters):
+        start = end if i != 0 else 0
+        end = start + len(allNonoutlierClusters[i])
+        polygons.append([list(zip(*polyshape.exterior.coords.xy)) for polyshape in poly_shapes[start:end]])
 
     clusterToJSON(
         {"polygons": polygons, "communities": communities, "outliers": outliers},
@@ -122,19 +87,6 @@ def main():
     )
 
     return
-    writeData: List[List[str]] = [
-        memberAtId
-        for l2CommunityId in L2CommunitesGlobal
-        for memberAtId in L2CommunitesGlobal[l2CommunityId]
-    ]
-    writeCSV(
-        writeData,
-        path="C:/Users/osharaki/OneDrive - Technische Universitat Munchen/programming_misc/WebDev/Leaflet_Sandbox/data.csv",
-    )
-    """ for l2CommunityId in l2CommunitiesLatinAmerica:
-        for memberAtId in l2CommunitiesLatinAmerica[l2CommunityId]:
-            print(memberAtId)
-        print(f"End members in community {l2CommunityId}") """
 
 
 if __name__ == "__main__":
