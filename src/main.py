@@ -2,6 +2,7 @@ import matplotlib.pyplot as pl
 import numpy as np
 
 from shapely.affinity import scale
+from shapely.geometry import Polygon
 from typing import Dict, List, Tuple
 from csvIO import *
 from shpIO import *
@@ -103,10 +104,12 @@ def main():
                 "SouthAmerica.geojson",
             )
         )
-        polygon = list(map(lambda point: [point[1],point[0]], containingAreaShape['geometry']['coordinates'][0])) # flipping coordinates
+        containingAreaShape = list(map(lambda point: [point[1],point[0]], containingAreaShape['geometry']['coordinates'][0])) # flipping coordinates for Leaflet compatibility
         
-        # polygon = generateConstrainedVoronoiDiagram(nonoutliers, containingAreaShape)
-       
+        containingAreaShape = Polygon(containingAreaShape)
+        poly_shapes, pts, poly_to_pt_assignments = generateConstrainedVoronoiDiagram(nonoutliers, containingAreaShape)
+        polygon = [list(zip(*polyshape.exterior.coords.xy)) for polyshape in poly_shapes]
+        
         polygons.append(polygon)
         # communities.append(communityNodes)
         communities.append(nonoutliers)
