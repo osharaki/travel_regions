@@ -76,10 +76,13 @@ def main():
     poly_shapes, pts, poly_to_pt_assignments = generateConstrainedVoronoiDiagram(
         nonoutliersJoined, containingAreaShape
     )
+    pt_to_poly_assignments = [None]*len(nonoutliersJoined)
+    for polygon, points_in_polygon in zip(poly_shapes, poly_to_pt_assignments):
+        pt_to_poly_assignments[points_in_polygon[0]] = polygon
     for i, c in enumerate(allNonoutlierClusters):
         start = end if i != 0 else 0
         end = start + len(allNonoutlierClusters[i])
-        polygons.append([list(zip(*polyshape.exterior.coords.xy)) for polyshape in poly_shapes[start:end]])
+        polygons.append([list(zip(*polygon.exterior.coords.xy)) for polygon in pt_to_poly_assignments[start:end]])
 
     clusterToJSON(
         {"polygons": polygons, "communities": communities, "outliers": outliers},
