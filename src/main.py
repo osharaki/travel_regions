@@ -25,7 +25,6 @@ def main():
 
     polygons = []
     communities = []
-    allNonoutlierClusters = []
     outliers = []
     for community in list(l2CommunitiesLatinAmerica.values())[:3]:
         communityNodes: List[Tuple[float, float]] = [
@@ -45,7 +44,6 @@ def main():
             for node in enumerate(communityNodes)
             if node[0] not in outlierIndices
         ]
-        allNonoutlierClusters.append(nonoutliers)
         communities.append(nonoutliers)
         outliers.append([communityNodes[index] for index in outlierIndices])
         containingAreaShape = readGeoJSON(
@@ -70,8 +68,8 @@ def main():
     containingAreaShape = Polygon(containingAreaShape)
     nonoutliersJoined = [
         nonoutlier
-        for nonoutlierCluster in allNonoutlierClusters
-        for nonoutlier in nonoutlierCluster
+        for community in communities
+        for nonoutlier in community
     ]
     poly_shapes, pts, poly_to_pt_assignments = generateConstrainedVoronoiDiagram(
         nonoutliersJoined, containingAreaShape
@@ -79,9 +77,9 @@ def main():
     pt_to_poly_assignments = [None]*len(nonoutliersJoined)
     for polygon, points_in_polygon in zip(poly_shapes, poly_to_pt_assignments):
         pt_to_poly_assignments[points_in_polygon[0]] = polygon
-    for i, c in enumerate(allNonoutlierClusters):
+    for i, c in enumerate(communities):
         start = end if i != 0 else 0
-        end = start + len(allNonoutlierClusters[i])
+        end = start + len(communities[i])
         polygons.append([list(zip(*polygon.exterior.coords.xy)) for polygon in pt_to_poly_assignments[start:end]])
 
     clusterToJSON(
