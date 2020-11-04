@@ -23,7 +23,6 @@ def main():
         l1Communities[0], 2
     )  # L2 regions in SA (~countries)
 
-    polygons = []
     communities = []
     outliers = []
     for community in list(l2CommunitiesLatinAmerica.values())[:3]:
@@ -71,16 +70,9 @@ def main():
         for community in communities
         for nonoutlier in community
     ]
-    poly_shapes, pts, poly_to_pt_assignments = generateConstrainedVoronoiDiagram(
-        nonoutliersJoined, containingAreaShape
+    polygons = generateConstrainedVoronoiDiagram(
+        nonoutliersJoined, containingAreaShape, communities
     )
-    pt_to_poly_assignments = [None]*len(nonoutliersJoined)
-    for polygon, points_in_polygon in zip(poly_shapes, poly_to_pt_assignments):
-        pt_to_poly_assignments[points_in_polygon[0]] = polygon
-    for i, c in enumerate(communities):
-        start = end if i != 0 else 0
-        end = start + len(communities[i])
-        polygons.append([list(zip(*polygon.exterior.coords.xy)) for polygon in pt_to_poly_assignments[start:end]])
 
     clusterToJSON(
         {"polygons": polygons, "communities": communities, "outliers": outliers},

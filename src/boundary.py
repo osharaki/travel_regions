@@ -33,7 +33,7 @@ def generateConvexHull(points: List[Tuple[float, float]]):
     return pp._path.vertices.tolist()
 
 
-def generateConstrainedVoronoiDiagram(points, containingArea):
+def generateConstrainedVoronoiDiagram(points, containingArea, communities=None):
 
     points = np.array(points)
 
@@ -46,6 +46,21 @@ def generateConstrainedVoronoiDiagram(points, containingArea):
     poly_shapes, pts, poly_to_pt_assignments = voronoi_regions_from_coords(
         points, containingArea
     )
+    if communities:
+        polygons = []
+        pt_to_poly_assignments = [None] * len(points)
+        for polygon, points_in_polygon in zip(poly_shapes, poly_to_pt_assignments):
+            pt_to_poly_assignments[points_in_polygon[0]] = polygon
+        for i, c in enumerate(communities):
+            start = end if i != 0 else 0
+            end = start + len(communities[i])
+            polygons.append(
+                [
+                    list(zip(*polygon.exterior.coords.xy))
+                    for polygon in pt_to_poly_assignments[start:end]
+                ]
+            )
+        return polygons
     return [poly_shapes, pts, poly_to_pt_assignments]
 
 
