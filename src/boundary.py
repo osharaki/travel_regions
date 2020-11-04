@@ -33,8 +33,24 @@ def generateConvexHull(points: List[Tuple[float, float]]):
     return pp._path.vertices.tolist()
 
 
-def generateConstrainedVoronoiDiagram(points, containingArea, communities=None):
+def generateConstrainedVoronoiDiagram(
+    points: List[List[float]],
+    containingArea: geometry.Polygon,
+    communities: List[List[List[float]]] = None,
+) -> List:
+    """
+    Generates a Voronoi diagram from a list of points that is constrained within a given area. If `communities` is provided, this method further assigns the generated Voronoi regions to their corresponding communities. All coordinates must be given as latitude followed by longitude.
 
+    Arguments:
+        points {List[List[float]]} -- A list of coordinates.
+        containingArea {geometry.Polygon} -- A Shapely polygon that forms the boundary of the generated Voronoi diagram. All `points` must be contained within this area.
+
+    Keyword Arguments:
+        communities {List[List[List[float]]]} -- An optional mapping that associates each community with the points (provided as coordinates) belonging to it. (default: {None})
+
+    Returns:
+        List -- If `communities` is provided, the generated Voronoi regions will be returned as a list of communities of the form List[List[List[float]]], where each community contains the geometries of the regions that form it. Otherwise, the output of geovoronoi's `voronoi_regions_from_coords` method is returned as is.
+    """
     points = np.array(points)
 
     coords = coords_to_points(points)
