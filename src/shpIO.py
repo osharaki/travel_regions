@@ -11,21 +11,16 @@ germany_france = world.loc[world['name'].isin(['Germany','Switzerland', 'Austria
 print(germany_france)
 germany_france.plot(figsize=(10, 3)) """
 
-""" shapefile = gpd.read_file(
-    os.path.join(
-        "c://",
-        "users",
-        "osharaki",
-        "desktop",
-        "tmp",
-        "geo",
-        "ne_110m_populated_places",
-        "ne_110m_populated_places.shp",
-    )
-)
-portion = shapefile.loc[shapefile['SOV0NAME']=='India']
-print(portion)
-portion.plot(figsize=(10, 3)) """
+
+def extractShape(path, name):
+    shapefile = gpd.read_file(path)
+    # portion = shapefile.loc[shapefile['SOV0NAME']=='India']
+    # print(shapefile)
+    portion = shapefile.loc[shapefile["name_en"] == name]
+    # print(shapefile['name_en'].values.tolist())
+    return portion
+    # portion.plot(figsize=(10, 3))
+
 
 def polyToShp(polygons, target):
     gdf = gpd.GeoDataFrame(geometry=polygons)
