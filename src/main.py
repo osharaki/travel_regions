@@ -74,11 +74,22 @@ def main():
     polygons = []
     for mergedRegions in mergeRegions(*voronoiClusters):
         polygons.append(
-            list(zip(*mergedRegions.exterior.coords.xy))
+            {
+                "type": "polygon",
+                "geometry": list(zip(*mergedRegions.exterior.coords.xy)),
+            }
             if not isinstance(mergedRegions, list)
-            else list(map(lambda polygon: list(zip(*polygon.exterior.coords.xy)), mergedRegions))
+            else {
+                "type": "multipolygon",
+                "geometry": list(
+                    map(
+                        lambda polygon: list(zip(*polygon.exterior.coords.xy)),
+                        mergedRegions,
+                    )
+                ),
+            }
         )
-
+    
     clusterToJSON(
         {
             "boundary": containingArea,
