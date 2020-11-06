@@ -1,7 +1,3 @@
-import matplotlib.pyplot as pl
-import numpy as np
-
-from shapely.affinity import scale
 from shapely.geometry import Polygon
 from typing import Dict, List, Tuple
 from csvIO import *
@@ -45,37 +41,51 @@ def main():
         ]
         communities.append(nonoutliers)
         outliers.append([communityNodes[index] for index in outlierIndices])
-        containingAreaShape = readGeoJSON(
-            os.path.join(
-                "c://",
-                "users",
-                "osharaki",
-                "desktop",
-                "tmp",
-                "geo",
-                "SouthAmerica.geojson",
-            )
+
+    containingAreaShape = readGeoJSON(
+        os.path.join(
+            "c://",
+            "users",
+            "osharaki",
+            "desktop",
+            "tmp",
+            "geo",
+            "SouthAmerica.geojson",
         )
+    )
 
     containingAreaShape = list(
         map(
             lambda point: [point[1], point[0]],
             containingAreaShape["geometry"]["coordinates"][0],
         )
-    )  # flipping coordinates for Leaflet compatibility
-
+    )  # flipping coordinates for geovoronoi and Leaflet compatibility
+    containingArea = containingAreaShape
     containingAreaShape = Polygon(containingAreaShape)
     nonoutliersJoined = [
-        nonoutlier
-        for community in communities
-        for nonoutlier in community
+        nonoutlier for community in communities for nonoutlier in community
     ]
-    polygons = generateConstrainedVoronoiDiagram(
+
+    voronoiClusters = generateConstrainedVoronoiDiagram(
         nonoutliersJoined, containingAreaShape, communities
     )
 
+    # Convert merged regions from Shapely polygons to list of coordinates taking into consideration regions with fragmented unions (typically the result of communities with noncontiguous Voronoi regions)
+    polygons = []
+    for mergedRegions in mergeRegions(*voronoiClusters):
+        polygons.append(
+            list(zip(*mergedRegions.exterior.coords.xy))
+            if not isinstance(mergedRegions, list)
+            else list(map(lambda polygon: list(zip(*polygon.exterior.coords.xy)), mergedRegions))
+        )
+
     clusterToJSON(
-        {"polygons": polygons, "communities": communities, "outliers": outliers},
+        {
+            "boundary": containingArea,
+            "polygons": polygons,
+            "communities": communities,
+            "outliers": outliers,
+        },
         "C:/Users/osharaki/OneDrive - Technische Universitat Munchen/programming_misc/WebDev/Leaflet_Sandbox/data.json",
     )
 
