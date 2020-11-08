@@ -4,8 +4,8 @@ from csvIO import *
 from shpIO import *
 from jsonIO import *
 from parseCSV import *
-from boundary import *
 from outliers import *
+from poly import *
 
 
 def main():
@@ -71,25 +71,8 @@ def main():
     )
 
     # Convert merged regions from Shapely polygons to list of coordinates taking into consideration regions with fragmented unions (typically the result of communities with noncontiguous Voronoi regions)
-    polygons = []
-    for mergedRegions in mergeRegions(*voronoiClusters):
-        polygons.append(
-            {
-                "type": "polygon",
-                "geometry": list(zip(*mergedRegions.exterior.coords.xy)),
-            }
-            if not isinstance(mergedRegions, list)
-            else {
-                "type": "multipolygon",
-                "geometry": list(
-                    map(
-                        lambda polygon: list(zip(*polygon.exterior.coords.xy)),
-                        mergedRegions,
-                    )
-                ),
-            }
-        )
-    
+    polygons = extractGeometries(*mergeRegions(*voronoiClusters))
+
     clusterToJSON(
         {
             "boundary": containingArea,

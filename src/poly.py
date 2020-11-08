@@ -1,4 +1,5 @@
 # http://blog.thehumangeo.com/2014/05/12/drawing-boundaries-in-python/
+from typing import Dict, List, Tuple
 import shapely.geometry as geometry
 import matplotlib.pyplot as pl
 import alphashape
@@ -79,11 +80,12 @@ def mergeRegions(*regionsByCommunity):
     mergedRegions = []
     for communityRegions in regionsByCommunity:
         mergedRegion = cascaded_union(communityRegions)
-        if  isinstance(mergedRegion, geometry.MultiPolygon):
+        if isinstance(mergedRegion, geometry.MultiPolygon):
             mergedRegions.append(list(mergedRegion))
         else:
             mergedRegions.append(mergedRegion)
     return mergedRegions
+
 
 def plot_polygon(polygon, figure):
     ax = figure.add_subplot(111)
@@ -95,3 +97,27 @@ def plot_polygon(polygon, figure):
     ax.add_patch(patch)
     return figure
 
+
+# Convert Shapely regions to list coordinates
+def extractGeometries(*shapelyPolygons) -> List[Dict]:
+    """
+    Given one or more Shapely polygons/multipolygons, extracts their geometries as lists of coordinates.
+
+    Returns:
+        List[Dict] -- List of coordinates representing the geometries of the given polygons.
+    """
+    geometries = []
+    for polygon in shapelyPolygons:
+        geometries.append(
+            {"type": "polygon", "geometry": list(zip(*polygon.exterior.coords.xy)),}
+            if not isinstance(polygon, list)
+            else {
+                "type": "multipolygon",
+                "geometry": list(
+                    map(
+                        lambda polygon: list(zip(*polygon.exterior.coords.xy)), polygon,
+                    )
+                ),
+            }
+        )
+    return geometries
