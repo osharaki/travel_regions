@@ -69,9 +69,20 @@ def main():
     voronoiClusters = generateConstrainedVoronoiDiagram(
         nonoutliersJoined, containingAreaShape, communities
     )
-
+    mergedVoronoiClusters = mergeRegions(*voronoiClusters)
+    print(
+        classifyPoints(
+            [
+                [-14.269798, -40.821783],
+                [-24.452236, -48.556158],
+                [-38.826944, -71.847173],
+            ],
+            mergedVoronoiClusters,
+        )
+    )
+    return
     # Convert merged regions from Shapely polygons to list of coordinates taking into consideration regions with fragmented unions (typically the result of communities with noncontiguous Voronoi regions)
-    polygons = extractGeometries(*mergeRegions(*voronoiClusters))
+    polygons = extractGeometries(*mergedVoronoiClusters)
 
     clusterToJSON(
         {

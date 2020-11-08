@@ -1,5 +1,5 @@
 # http://blog.thehumangeo.com/2014/05/12/drawing-boundaries-in-python/
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Union
 import shapely.geometry as geometry
 import matplotlib.pyplot as pl
 import alphashape
@@ -9,7 +9,7 @@ import numpy as np
 
 from typing import Dict, List, Tuple
 from descartes import PolygonPatch
-from geovoronoi import voronoi_regions_from_coords, coords_to_points
+from geovoronoi import voronoi_regions_from_coords, coords_to_points, points_to_coords
 from shapely.ops import cascaded_union
 
 from shpIO import *
@@ -38,7 +38,7 @@ def generateConstrainedVoronoiDiagram(
     points: List[List[float]],
     containingArea: geometry.Polygon,
     communities: List[List[List[float]]] = None,
-) -> List:
+) -> Union[List[List[List[float]]], List[List[float]]]:
     """
     Generates a Voronoi diagram from a list of points that is constrained within a given area. If `communities` is provided, this method further assigns the generated Voronoi regions to their corresponding communities. All coordinates must be given as latitude followed by longitude. All polygons are returned as a list of coordinates of the form `List[List[float]]`.
 
@@ -80,10 +80,7 @@ def mergeRegions(*regionsByCommunity):
     mergedRegions = []
     for communityRegions in regionsByCommunity:
         mergedRegion = cascaded_union(communityRegions)
-        if isinstance(mergedRegion, geometry.MultiPolygon):
-            mergedRegions.append(list(mergedRegion))
-        else:
-            mergedRegions.append(mergedRegion)
+        mergedRegions.append(mergedRegion)
     return mergedRegions
 
 
@@ -110,14 +107,27 @@ def extractGeometries(*shapelyPolygons) -> List[Dict]:
     for polygon in shapelyPolygons:
         geometries.append(
             {"type": "polygon", "geometry": list(zip(*polygon.exterior.coords.xy)),}
-            if not isinstance(polygon, list)
+            if not isinstance(polygon, geometry.MultiPolygon)
             else {
                 "type": "multipolygon",
                 "geometry": list(
                     map(
-                        lambda polygon: list(zip(*polygon.exterior.coords.xy)), polygon,
+                        lambda polygon: list(zip(*polygon.exterior.coords.xy)),
+                        list(polygon),
                     )
                 ),
             }
         )
     return geometries
+
+
+def classifyPoints(
+    points: List[List[float]],
+    communities: List[Union[geometry.Polygon, geometry.MultiPolygon]],
+) -> int:
+    classifications = {i: [] for i, _ in enumerate(communities)}
+    for p in coords_to_points(points):
+        for i, community in enumerate(communities):
+            if p.within(community):
+                classifications[i].append(points_to_coords([p])[0])
+    return classifications
