@@ -12,8 +12,6 @@ from descartes import PolygonPatch
 from geovoronoi import voronoi_regions_from_coords, coords_to_points, points_to_coords
 from shapely.ops import cascaded_union
 
-from shpIO import *
-
 
 def generateConcaveHull(points: List[Tuple[float, float]], visualize=False):
     start = time.time()

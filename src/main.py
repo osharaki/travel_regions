@@ -1,9 +1,6 @@
 from shapely.geometry import Polygon
 from typing import Dict, List, Tuple
-from csvIO import *
-from shpIO import *
-from jsonIO import *
-from parseCSV import *
+from utils.file_utils import *
 from outliers import *
 from poly import *
 
@@ -49,7 +46,7 @@ def main():
         ]
         communities.append(nonoutliers)
         outliers.append([communityNodes[index] for index in outlierIndices])
-    
+
     containingAreaShape = readGeoJSON(os.path.join("data", "cutouts", "world.geojson",))
 
     containingAreaShape = list(
