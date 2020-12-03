@@ -15,13 +15,21 @@ def main():
     l1Communities: Dict[int, List[List[str]]] = getCommunities(
         data, 1
     )  # All L1 regions (continents)
+    """ l2Communities: Dict[int, List[List[str]]] = getCommunities(
+        [node for continentNodes in l1Communities.values() for node in continentNodes],
+        2,
+    ) """  # All L2 regions (~continents)
     l2CommunitiesLatinAmerica: Dict[int, List[List[str]]] = getCommunities(
         l1Communities[0], 2
     )  # L2 regions in SA (~countries)
 
+    l2CommunitiesX: Dict[int, List[List[str]]] = getCommunities(
+        l1Communities[0] + l1Communities[1] + l1Communities[2] + l1Communities[3], 2
+    )  # L2 regions in SA (~countries)
+    print(len(list(l1Communities.values())))
     communities = []
     outliers = []
-    for community in list(l2CommunitiesLatinAmerica.values())[:3]:
+    for community in list(l2CommunitiesX.values()):
         communityNodes: List[Tuple[float, float]] = [
             [float(point[-3]), float(point[-2])] for point in community
         ]
@@ -41,18 +49,8 @@ def main():
         ]
         communities.append(nonoutliers)
         outliers.append([communityNodes[index] for index in outlierIndices])
-
-    containingAreaShape = readGeoJSON(
-        os.path.join(
-            "c://",
-            "users",
-            "osharaki",
-            "desktop",
-            "tmp",
-            "geo",
-            "SouthAmerica.geojson",
-        )
-    )
+    
+    containingAreaShape = readGeoJSON(os.path.join("data", "cutouts", "world.geojson",))
 
     containingAreaShape = list(
         map(
@@ -80,7 +78,6 @@ def main():
             mergedVoronoiClusters,
         )
     )
-    return
     # Convert merged regions from Shapely polygons to list of coordinates taking into consideration regions with fragmented unions (typically the result of communities with noncontiguous Voronoi regions)
     polygons = extractGeometries(*mergedVoronoiClusters)
 
