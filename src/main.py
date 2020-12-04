@@ -2,7 +2,7 @@ from shapely.geometry import Polygon
 from typing import Dict, List, Tuple
 from utils.file_utils import *
 from outliers import *
-from poly import *
+from polygons import *
 
 
 def main():
