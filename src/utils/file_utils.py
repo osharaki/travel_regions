@@ -3,8 +3,8 @@ import json
 import geopandas as gpd
 from typing import List, Dict
 
-# TODO marked for removal due to disuse
-def readCSV(path: str) -> List[str]:
+
+def readCSV(path: str) -> List[List[str]]:
     with open(path, newline="", encoding="utf-8",) as csvfile:
         csvReader = csv.reader(csvfile, delimiter=",")
         data: List[str] = []
@@ -65,7 +65,7 @@ def getMaxInCol(col: int) -> int:
         return maxComm1
 
 
-def getCommunities(data: List[str], commLevel: int) -> Dict[int, List[List[str]]]:
+def getCommunities(data: List[List[str]], commLevel: int) -> Dict[int, List[List[str]]]:
     """
     Creates a mapping that assigns to each community the location entries belonging to it.
 
