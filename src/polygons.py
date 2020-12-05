@@ -36,9 +36,9 @@ def generateConstrainedVoronoiDiagram(
     points: List[List[float]],
     containingArea: geometry.Polygon,
     communities: List[List[List[float]]] = None,
-) -> Union[List[List[List[float]]], List[List[float]]]:
+) -> Union[List[List[geometry.Polygon]], List[geometry.Polygon]]:
     """
-    Generates a Voronoi diagram from a list of points that is constrained within a given area. If `communities` is provided, this method further assigns the generated Voronoi regions to their corresponding communities. All coordinates must be given as latitude followed by longitude. All polygons are returned as a list of coordinates of the form `List[List[float]]`.
+    Generates a Voronoi diagram from a list of points that is constrained within a given area. If `communities` is provided, this method further assigns the generated Voronoi regions to their corresponding communities. All coordinates must be given as latitude followed by longitude. All polygons are returned as Shapely polygons.
 
     Arguments:
         points {List[List[float]]} -- A list of coordinates.
@@ -48,7 +48,7 @@ def generateConstrainedVoronoiDiagram(
         communities {List[List[List[float]]]} -- An optional mapping that associates each community with the points (provided as coordinates) belonging to it. (default: {None})
 
     Returns:
-        List -- The Voronoi diagram as a list of polygons, i.e. List[List[float]], each representing a Voronoi region. If `communities` is provided, the generated Voronoi regions will further be organized and returned as a list of communities of the form List[List[List[float]]], where each community contains the Voronoi regions surrounding the nodes that form it.
+        List -- The Voronoi diagram as a list of Shapely polygons. If `communities` is provided, the generated Voronoi regions will further be organized and returned as a list of communities of the form List[List[geometry.Polygon]], where each community contains the Voronoi regions surrounding the nodes that form it.
     """
     points = np.array(points)
 
@@ -74,9 +74,17 @@ def generateConstrainedVoronoiDiagram(
     return poly_shapes
 
 
-def mergeRegions(*regionsByCommunity):
+def mergeRegions(
+    *voronoiCommunities: List[geometry.Polygon],
+) -> Union[List[geometry.MultiPolygon], List[geometry.Polygon]]:
+    """
+    This function takes an arbitrary number of communities, each represented as a list of Shapely polygons and combines each community's regions into a single unified region. 
+
+    Returns:
+        Union[List[geometry.MultiPolygon], List[geometry.Polygon]] -- Communities each represented by either a Shapely Polygon or MultiPolygon depending on whether the community's original regions were spatially contiguous.
+    """
     mergedRegions = []
-    for communityRegions in regionsByCommunity:
+    for communityRegions in voronoiCommunities:
         mergedRegion = cascaded_union(communityRegions)
         mergedRegions.append(mergedRegion)
     return mergedRegions
