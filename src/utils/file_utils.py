@@ -43,11 +43,11 @@ def getMaxInCol(col: int) -> int:
     """
     Returns the highest value in the specified column.
 
-    Arguments:
-        col {int} -- Column index
+    Args:
+        col (int): Column index.
 
     Returns:
-        int -- Maximum value in column
+        int: Maximum value in column.
     """
     with open(
         "data/communities_-1__with_distance_multi-level_geonames_cities_7.csv",
@@ -69,12 +69,12 @@ def getCommunities(data: List[List[str]], commLevel: int) -> Dict[int, List[List
     """
     Creates a mapping that assigns to each community the location entries belonging to it.
 
-    Arguments:
-        data {List[str]} -- The location data to be filtered. Each location is expected to correspond to the form: community_1,community_2,community_3,community_4,community_5,community_6,country_code,latitude,longitude,place_name
-        commLevel {int} -- The community level in the region hierarchy.
+    Args:
+        data (List[List[str]]): The location data to be filtered. Each location is expected to correspond to the form: community_1,community_2,community_3,community_4,community_5,community_6,country_code,latitude,longitude,place_name.
+        commLevel (int): The community level in the region hierarchy.
 
     Returns:
-        Dict[int, List[List[str]]] -- The mapping between communities to location entries.
+        Dict[int, List[List[str]]]: The mapping between communities to location entries.
     """
     communities = {}
     for i, row in enumerate(data):

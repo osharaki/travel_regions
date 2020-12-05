@@ -27,12 +27,12 @@ def findDistance(a, b):
     """
     Finds Eucledian distance between two points.
 
-    Arguments:
-        a {List[float]} -- Coordinates of point a
-        b {List[float]} -- Coordinates of point b
+    Args:
+        a (List[float]): Coordinates of point a.
+        b (List[float]): Coordinates of point b.
 
     Returns:
-        float -- Distance between a and b
+        float: Distance between a and b.
     """
     dimensions = zip(a, b)
     dimesionsSubtracted = map(
