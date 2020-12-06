@@ -1,6 +1,9 @@
 import json
 import os
 from typing import List
+
+from shapely.geometry.polygon import Polygon
+
 from node import Node
 from outliers import detectOutliersZScore
 from polygons import extractGeometries, generateConstrainedVoronoiDiagram, mergeRegions
@@ -76,13 +79,17 @@ def generate_bounded_regions(
             bounding_area["geometry"]["coordinates"][0],
         )
     )  # flipping coordinates for geovoronoi and Leaflet compatibility
+    bounding_area_shape = Polygon(bounding_area)
     nonoutliers = [
         community_nonoutlier
         for community_nonoutliers in nonoutliers_by_community
         for community_nonoutlier in community_nonoutliers
     ]
+    nonoutliers_latlng = [
+        (float(nonoutlier[-3]), float(nonoutlier[-2])) for nonoutlier in nonoutliers
+    ]
     voronoiClusters = generateConstrainedVoronoiDiagram(
-        nonoutliers, bounding_area, nonoutliers_by_community
+        nonoutliers_latlng, bounding_area_shape, nonoutliers_by_community
     )
     merged_voronoi_clusters = mergeRegions(
         *voronoiClusters
@@ -134,3 +141,8 @@ def load_regions(path: str, level: int) -> List[Region]:
 def export_regions():
     # TODO save generated community regions to file
     pass
+
+
+regions = generate_bounded_regions("../output/regions_test.json")
+print(regions)
+
