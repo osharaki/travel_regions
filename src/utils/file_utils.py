@@ -4,7 +4,7 @@ import geopandas as gpd
 from typing import List, Dict
 
 
-def readCSV(path: str) -> List[List[str]]:
+def read_csv(path: str) -> List[List[str]]:
     with open(path, newline="", encoding="utf-8",) as csvfile:
         csvReader = csv.reader(csvfile, delimiter=",")
         data: List[str] = []
@@ -13,7 +13,7 @@ def readCSV(path: str) -> List[List[str]]:
         return data
 
 
-def writeCSV(
+def write_csv(
     data: List[List[str]],
     headers: List[str] = [
         "",
@@ -39,7 +39,7 @@ def writeCSV(
 ######################
 # CSV file utilities #
 ######################
-def getMaxInCol(col: int) -> int:
+def get_max_in_col(col: int) -> int:
     """
     Returns the highest value in the specified column.
 
@@ -65,7 +65,9 @@ def getMaxInCol(col: int) -> int:
         return maxComm1
 
 
-def getCommunities(data: List[List[str]], commLevel: int) -> Dict[int, List[List[str]]]:
+def get_communities(
+    data: List[List[str]], commLevel: int
+) -> Dict[int, List[List[str]]]:
     """
     Creates a mapping that assigns to each community the location entries belonging to it.
 
@@ -94,12 +96,12 @@ def getCommunities(data: List[List[str]], commLevel: int) -> Dict[int, List[List
 #######################
 # JSON file utilities #
 #######################
-def clusterToJSON(data: Dict[str, List[List[float]]], target):
+def cluster_to_json(data: Dict[str, List[List[float]]], target):
     with open(target, "w") as f:
         json.dump(data, f, indent=4)
 
 
-def readGeoJSON(path):
+def read_geo_json(path):
     with open(path, "r") as f:
         return json.load(f)["features"][0]
 
@@ -107,7 +109,7 @@ def readGeoJSON(path):
 #######################
 # Shapefile utilities #
 #######################
-def extractShape(path, name):
+def extract_shape(path, name):
     shapefile = gpd.read_file(path)
     # portion = shapefile.loc[shapefile['SOV0NAME']=='India']
     # print(shapefile)
@@ -117,7 +119,7 @@ def extractShape(path, name):
     # portion.plot(figsize=(10, 3))
 
 
-def polyToShp(polygons, target):
+def poly_to_shp(polygons, target):
     gdf = gpd.GeoDataFrame(geometry=polygons)
     gdf.to_file(target)
 

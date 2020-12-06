@@ -6,23 +6,23 @@ from polygons import *
 
 
 def main():
-    data: List[str] = readCSV(
+    data: List[str] = read_csv(
         "data/communities_-1__with_distance_multi-level_geonames_cities_7.csv"
     )
-    l1Communities: Dict[int, List[List[str]]] = getCommunities(
+    l1Communities: Dict[int, List[List[str]]] = get_communities(
         data, 1
     )  # All L1 regions (continents)
-    """ l2Communities: Dict[int, List[List[str]]] = getCommunities(
+    """ l2Communities: Dict[int, List[List[str]]] = get_communities(
         [node for continentNodes in l1Communities.values() for node in continentNodes],
         2,
     ) """  # All L2 regions (~continents)
-    l2CommunitiesLatinAmerica: Dict[int, List[List[str]]] = getCommunities(
+    l2CommunitiesLatinAmerica: Dict[int, List[List[str]]] = get_communities(
         l1Communities[0], 2
     )  # L2 regions in SA (~countries)
 
-    l2CommunitiesX: Dict[int, List[List[str]]] = getCommunities(
+    l2CommunitiesX: Dict[int, List[List[str]]] = get_communities(
         l1Communities[0] + l1Communities[1] + l1Communities[2] + l1Communities[3], 2
-    )  # L2 regions in SA (~countries)
+    )  # L2 regions
     print(len(list(l1Communities.values())))
     communities = []
     outliers = []
@@ -31,7 +31,7 @@ def main():
             [float(point[-3]), float(point[-2])] for point in community
         ]
 
-        outliersZScore = detectOutliersZScore(communityNodes, threshold=3)
+        outliersZScore = detect_outliers_z_score(communityNodes, threshold=3)
         if len(outliersZScore) > 1:
             outlierIndices, _ = zip(*outliersZScore)
         elif len(outliersZScore) > 0:
@@ -47,7 +47,9 @@ def main():
         communities.append(nonoutliers)
         outliers.append([communityNodes[index] for index in outlierIndices])
 
-    containingAreaShape = readGeoJSON(os.path.join("data", "cutouts", "world.geojson",))
+    containingAreaShape = read_geo_json(
+        os.path.join("data", "cutouts", "world.geojson",)
+    )
 
     containingAreaShape = list(
         map(
@@ -61,12 +63,12 @@ def main():
         nonoutlier for community in communities for nonoutlier in community
     ]
 
-    voronoiClusters = generateConstrainedVoronoiDiagram(
+    voronoiClusters = generate_constrained_voronoi_diagram(
         nonoutliersJoined, containingAreaShape, communities
     )
-    mergedVoronoiClusters = mergeRegions(*voronoiClusters)
+    mergedVoronoiClusters = merge_regions(*voronoiClusters)
     print(
-        classifyPoints(
+        classify_points(
             [
                 [-14.269798, -40.821783],
                 [-24.452236, -48.556158],
@@ -76,9 +78,9 @@ def main():
         )
     )
     # Convert merged regions from Shapely polygons to list of coordinates taking into consideration regions with fragmented unions (typically the result of communities with noncontiguous Voronoi regions)
-    polygons = extractGeometries(*mergedVoronoiClusters)
+    polygons = extract_geometries(*mergedVoronoiClusters)
 
-    clusterToJSON(
+    cluster_to_json(
         {
             "boundary": containingArea,
             "polygons": polygons,

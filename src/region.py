@@ -12,8 +12,9 @@ class Region:
         self.name = self.generate_name()
         self.level = level
         self.geometry = geometry
-        # TODO assign self to nodes at `level`: node.regions[level] = self
         self.nodes = nodes
+        for node in nodes:
+            node.regions[level] = self
 
     def get_countries(self, threshold: int = 1) -> Set["Region"]:
         # TODO implement get_countries

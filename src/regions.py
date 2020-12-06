@@ -5,10 +5,14 @@ from typing import List
 from shapely.geometry.polygon import Polygon
 
 from node import Node
-from outliers import detectOutliersZScore
-from polygons import extractGeometries, generateConstrainedVoronoiDiagram, mergeRegions
+from outliers import detect_outliers_z_score
+from polygons import (
+    extract_geometries,
+    generate_constrained_voronoi_diagram,
+    merge_regions,
+)
 from region import Region
-from utils.file_utils import clusterToJSON, getCommunities, readCSV, readGeoJSON
+from utils.file_utils import cluster_to_json, get_communities, read_csv, read_geo_json
 
 
 def generate_bounded_regions(
@@ -23,18 +27,18 @@ def generate_bounded_regions(
     # Extract communities #
     #######################
     continents = {"SA": 0, "NA": 1, "EU": 2, "AS": 3}
-    data = readCSV(
+    data = read_csv(
         "data/communities_-1__with_distance_multi-level_geonames_cities_7.csv"
     )
-    communities = getCommunities(data, 1)
+    communities = get_communities(data, 1)
     if continent:
-        communities = getCommunities(data, 1)  # Extract l1 communities
+        communities = get_communities(data, 1)  # Extract l1 communities
         communities = communities[continents[continent]]  # Filter by continent
-        communities = getCommunities(
+        communities = get_communities(
             communities, level
         )  # Extract communities in continent at specified hierarichal level
     else:
-        communities = getCommunities(
+        communities = get_communities(
             communities[0] + communities[1] + communities[2] + communities[3], level
         )  # Level 1 communities 4 and above are very sparsely populated and thus excluded
 
@@ -47,7 +51,7 @@ def generate_bounded_regions(
     for community in list(communities.values()):
         # TODO use nodes in serialized form instead (like in main)
         community_nodes = [point for point in community]
-        outliersZScore = detectOutliersZScore(
+        outliersZScore = detect_outliers_z_score(
             [(float(node[-3]), float(node[-2])) for node in community_nodes],
             threshold=zThreshold,
         )
@@ -70,7 +74,7 @@ def generate_bounded_regions(
     # Generate polygons #
     #####################
     # TODO Create cutouts and load if continent is not None
-    bounding_area = readGeoJSON(
+    bounding_area = read_geo_json(
         None if continent else os.path.join("data", "cutouts", "world.geojson",)
     )
     bounding_area = list(
@@ -88,18 +92,18 @@ def generate_bounded_regions(
     nonoutliers_latlng = [
         (float(nonoutlier[-3]), float(nonoutlier[-2])) for nonoutlier in nonoutliers
     ]
-    voronoiClusters = generateConstrainedVoronoiDiagram(
+    voronoiClusters = generate_constrained_voronoi_diagram(
         nonoutliers_latlng, bounding_area_shape, nonoutliers_by_community
     )
-    merged_voronoi_clusters = mergeRegions(
+    merged_voronoi_clusters = merge_regions(
         *voronoiClusters
     )  # For each cluster, unifies the cluster's single-point voronoi regions into a single polygon
 
     ######################
     # Export communities #
     ######################
-    region_geometries = extractGeometries(*merged_voronoi_clusters)
-    clusterToJSON(
+    region_geometries = extract_geometries(*merged_voronoi_clusters)
+    cluster_to_json(
         {
             "level": level,
             "bounding_area": bounding_area,

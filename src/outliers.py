@@ -5,9 +5,9 @@ from functools import reduce
 from math import sqrt
 
 
-def detectOutliersZScore(data, threshold=3) -> List[Tuple[int, float]]:
-    centroid = findCentroid(data)
-    distancesFromCenter = [findDistance(point, centroid) for point in data]
+def detect_outliers_z_score(data, threshold=3) -> List[Tuple[int, float]]:
+    centroid = find_centroid(data)
+    distancesFromCenter = [find_distance(point, centroid) for point in data]
     zScores: float = stats.zscore(distancesFromCenter)
     outliers: List[Tuple[int, float]] = list(
         filter(lambda x: abs(x[1]) > threshold, enumerate(zScores))
@@ -15,7 +15,7 @@ def detectOutliersZScore(data, threshold=3) -> List[Tuple[int, float]]:
     return outliers
 
 
-def findCentroid(data):
+def find_centroid(data):
     x, y = zip(*data)
     size = len(x)
     xCenter = sum(x) / size
@@ -23,7 +23,7 @@ def findCentroid(data):
     return (xCenter, yCenter)
 
 
-def findDistance(a, b):
+def find_distance(a, b):
     """
     Finds Eucledian distance between two points.
 

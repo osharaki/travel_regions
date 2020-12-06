@@ -13,7 +13,7 @@ from geovoronoi import voronoi_regions_from_coords, coords_to_points, points_to_
 from shapely.ops import cascaded_union
 
 
-def generateConcaveHull(points: List[Tuple[float, float]], visualize=False):
+def generate_concave_hull(points: List[Tuple[float, float]], visualize=False):
     start = time.time()
     alpha_shape = alphashape.alphashape(points)
     fig, ax = pl.subplots()
@@ -26,13 +26,13 @@ def generateConcaveHull(points: List[Tuple[float, float]], visualize=False):
     return list(zip(*alpha_shape.exterior.coords.xy))
 
 
-def generateConvexHull(points: List[Tuple[float, float]]):
+def generate_convex_hull(points: List[Tuple[float, float]]):
     point_collection = geometry.MultiPoint(points)
     pp = PolygonPatch(point_collection.convex_hull)
     return pp._path.vertices.tolist()
 
 
-def generateConstrainedVoronoiDiagram(
+def generate_constrained_voronoi_diagram(
     points: List[List[float]],
     containingArea: geometry.Polygon,
     communities: List[List[List[float]]] = None,
@@ -72,7 +72,7 @@ def generateConstrainedVoronoiDiagram(
     return poly_shapes
 
 
-def mergeRegions(
+def merge_regions(
     *voronoiCommunities: List[geometry.Polygon],
 ) -> Union[List[geometry.MultiPolygon], List[geometry.Polygon]]:
     """
@@ -103,7 +103,7 @@ def plot_polygon(polygon, figure):
 
 
 # Convert Shapely regions to list coordinates
-def extractGeometries(*shapelyPolygons) -> List[Dict]:
+def extract_geometries(*shapelyPolygons) -> List[Dict]:
     """
     Given one or more Shapely polygons/multipolygons, extracts their geometries as lists of coordinates.
 
@@ -131,7 +131,7 @@ def extractGeometries(*shapelyPolygons) -> List[Dict]:
     return geometries
 
 
-def classifyPoints(
+def classify_points(
     points: List[List[float]],
     communities: List[Union[geometry.Polygon, geometry.MultiPolygon]],
 ) -> int:
