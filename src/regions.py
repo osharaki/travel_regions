@@ -43,12 +43,10 @@ def generate_bounded_regions(
     # TODO consider only creating list of Nodes at the very end to not have to reiterate over them to fill in missing region information
     for community in list(communities.values()):
         # TODO use nodes in serialized form instead (like in main)
-        community_nodes = [
-            Node(point[0], point[-1], (float(point[-3]), float(point[-2]), None, {}),)
-            for point in community
-        ]
+        community_nodes = [point for point in community]
         outliersZScore = detectOutliersZScore(
-            [node.latlng for node in community_nodes], threshold=zThreshold
+            [(float(node[-3]), float(node[-2])) for node in community_nodes],
+            threshold=zThreshold,
         )
         if len(outliersZScore) > 1:
             outlier_indices, _ = zip(*outliersZScore)
@@ -108,7 +106,11 @@ def generate_bounded_regions(
     ###########################################
     # Load communities as instances of Region #
     ###########################################
-    # TODO Generate and return Region instances
+    return load_regions(path, level)
+
+
+def load_regions(path: str, level: int) -> List[Region]:
+    # Read region file and generate Region objects accordingly
     regions = []
     with open(path, "r") as f:
         regions = json.load(f)
@@ -117,15 +119,16 @@ def generate_bounded_regions(
         nodes = regions["nodes"]
 
         for i in range(len(geometries)):
-            # TODO add nodes to region
-            # [Node() for region_node in nodes[i]]
-            regions.append(Region(level, geometries[i],))
-
-
-def load_regions(path: str, level: int) -> List[Region]:
-    # TODO read region file and generate Region objects accordingly
-    # TODO Assign each node the correct region id on this hierarchical level: node.regions[level] = regionId
-    pass
+            region_nodes = [
+                Node(
+                    region_node[0],
+                    region_node[-1],
+                    (float(region_node[-3]), float(region_node[-2]), None),
+                )
+                for region_node in nodes[i]
+            ]
+            regions.append(Region(hierarchical_level, geometries[i], region_nodes))
+        return regions
 
 
 def export_regions():
