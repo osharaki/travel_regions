@@ -1,5 +1,6 @@
 import json
 import os
+from pathlib import Path
 from typing import List
 
 from shapely.geometry.polygon import Polygon
@@ -124,17 +125,18 @@ def load_regions(path: str, level: int) -> List[Region]:
     # Read region file and generate Region objects accordingly
     regions = []
     with open(path, "r") as f:
-        regions = json.load(f)
-        hierarchical_level = regions["level"]
-        geometries = regions["geometries"]
-        nodes = regions["nodes"]
+        regions_serialized = json.load(f)
+        hierarchical_level = regions_serialized["level"]
+        geometries = regions_serialized["geometries"]
+        nodes = regions_serialized["nodes"]
 
         for i in range(len(geometries)):
             region_nodes = [
                 Node(
                     region_node[0],
                     region_node[-1],
-                    (float(region_node[-3]), float(region_node[-2]), None),
+                    (float(region_node[-3]), float(region_node[-2])),
+                    None,
                 )
                 for region_node in nodes[i]
             ]
@@ -147,6 +149,8 @@ def export_regions():
     pass
 
 
-regions = generate_bounded_regions("../output/regions_test.json")
+regions = generate_bounded_regions(
+    os.path.join(Path(".").parent, "output", "regions_test.json")
+)
 print(regions)
 
