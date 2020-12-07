@@ -17,10 +17,8 @@ from utils.file_utils import cluster_to_json, get_communities, read_csv, read_ge
 
 
 def generate_bounded_regions(
-    path: str, level: int = 1, continent: str = None, zThreshold: float = 3
+    path: str, level: int = 1, continent: str = None, z_threshold: float = 3
 ) -> List[Region]:
-    # TODO break up into multiple functions
-
     # TODO add available continent options to docs
 
     # TODO Add continent cutouts
@@ -48,13 +46,12 @@ def generate_bounded_regions(
     #####################
     nonoutliers_by_community = []
     outliers = []
-    # TODO consider only creating list of Nodes at the very end to not have to reiterate over them to fill in missing region information
     for community in list(communities.values()):
         # TODO use nodes in serialized form instead (like in main)
         community_nodes = [point for point in community]
         outliersZScore = detect_outliers_z_score(
             [(float(node[-3]), float(node[-2])) for node in community_nodes],
-            threshold=zThreshold,
+            threshold=z_threshold,
         )
         if len(outliersZScore) > 1:
             outlier_indices, _ = zip(*outliersZScore)
@@ -121,7 +118,7 @@ def generate_bounded_regions(
     return load_regions(path, level)
 
 
-def load_regions(path: str, level: int) -> List[Region]:
+def load_regions(path: str) -> List[Region]:
     # Read region file and generate Region objects accordingly
     regions = []
     with open(path, "r") as f:
@@ -144,13 +141,9 @@ def load_regions(path: str, level: int) -> List[Region]:
         return regions
 
 
-def export_regions():
-    # TODO save generated community regions to file
-    pass
-
-
-regions = generate_bounded_regions(
+""" regions = generate_bounded_regions(
     os.path.join(Path(".").parent, "output", "regions_test.json")
-)
+) """
+regions = load_regions(os.path.join(Path(".").parent, "output", "regions_test.json"))
 print(regions)
 
