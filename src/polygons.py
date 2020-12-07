@@ -134,7 +134,7 @@ def extract_geometries(*shapelyPolygons) -> List[Dict]:
 def classify_points(
     points: List[List[float]],
     communities: List[Union[geometry.Polygon, geometry.MultiPolygon]],
-) -> int:
+) -> Dict[int, np.array]:
     classifications = {i: [] for i, _ in enumerate(communities)}
     for p in coords_to_points(points):
         for i, community in enumerate(communities):
