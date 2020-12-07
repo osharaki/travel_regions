@@ -1,13 +1,15 @@
 import json
 import os
 from pathlib import Path
-from typing import List, Tuple
+from typing import Dict, List, Tuple
+from shapely.geometry.multipolygon import MultiPolygon
 
 from shapely.geometry.polygon import Polygon
 
 from node import Node
 from outliers import detect_outliers_z_score
 from polygons import (
+    classify_points,
     extract_geometries,
     generate_constrained_voronoi_diagram,
     merge_regions,
@@ -103,6 +105,7 @@ def generate_bounded_regions(
     cluster_to_json(
         {
             "level": level,
+            "IDs": [],  # TODO implement and use id generation function
             "bounding_area": bounding_area,
             "geometries": region_geometries,
             "nodes": nonoutliers_by_community,
@@ -148,13 +151,37 @@ def get_nearest_node(latlng: Tuple[float, float]) -> Node:
     pass
 
 
-def point_to_region(latlng: Tuple[float, float], level: int = 1) -> Region:
-    pass
+def points_to_regions(
+    points: List[Tuple[float, float]], level: int = 1, custom_region_file: str = None
+) -> Dict[int, List[Tuple[float, float]]]:
+    regions = load_regions(
+        custom_region_file
+        if custom_region_file
+        else os.path.join(
+            Path(".").parent, "output", "level_" + str(level) + "_regions.json"
+        )
+    )
+    region_geometries = [region.geometry for region in regions]
+
+    region_geometries = [
+        Polygon(region_geometry["geometry"])
+        if region_geometry["type"] == "polygon"
+        else MultiPolygon(
+            [Polygon(geometry) for geometry in region_geometry["geometry"]]
+        )
+        for region_geometry in region_geometries
+    ]  # convert region geometries to Shapely polygons
+    classsifications = classify_points(points, region_geometries)
+    return {regions[index].id: points for index, points in classsifications.items()}
 
 
 """ regions = generate_bounded_regions(
     os.path.join(Path(".").parent, "output", "regions_test.json")
 ) """
-regions = load_regions(os.path.join(Path(".").parent, "output", "regions_test.json"))
-print(regions)
+# regions = load_regions(os.path.join(Path(".").parent, "output", "regions_test.json"))
+classifications = points_to_region(
+    [[-14.269798, -40.821783], [-24.452236, -48.556158], [-38.826944, -71.847173],],
+    custom_region_file=os.path.join(Path(".").parent, "output", "regions_test.json"),
+)
+print(classifications)
 
