@@ -1,7 +1,7 @@
 import json
 import os
 from pathlib import Path
-from typing import List
+from typing import List, Tuple
 
 from shapely.geometry.polygon import Polygon
 
@@ -47,7 +47,6 @@ def generate_bounded_regions(
     nonoutliers_by_community = []
     outliers = []
     for community in list(communities.values()):
-        # TODO use nodes in serialized form instead (like in main)
         community_nodes = [point for point in community]
         outliersZScore = detect_outliers_z_score(
             [(float(node[-3]), float(node[-2])) for node in community_nodes],
@@ -139,6 +138,18 @@ def load_regions(path: str) -> List[Region]:
             ]
             regions.append(Region(hierarchical_level, geometries[i], region_nodes))
         return regions
+
+
+def get_neighbors(region: Region) -> List[Region]:
+    pass
+
+
+def get_nearest_node(latlng: Tuple[float, float]) -> Node:
+    pass
+
+
+def point_to_region(latlng: Tuple[float, float], level: int = 1) -> Region:
+    pass
 
 
 """ regions = generate_bounded_regions(
