@@ -1,3 +1,4 @@
+from functools import reduce
 from typing import *
 
 from shapely import geometry
@@ -8,10 +9,10 @@ class Region:
     def __init__(
         self, level: int, geometry: List[Tuple[float, float]], nodes: List[Node],
     ):
-        self.id = self.generate_id()
         self.name = self.generate_name()
         self.level = level
         self.geometry = geometry
+        self.id = self.generate_id()
         self.nodes = nodes
         for node in nodes:
             node.regions[level] = self
@@ -25,8 +26,18 @@ class Region:
         pass
 
     def generate_id(self):
-        # TODO performs deterministic region id generation
-        pass
+        # Performs deterministic region id generation.
+        # 1. Adds up the x coorinates of all points in the region's geometry
+        # 2. Gets the absolute value of the result
+        # 3. Converts that to int
+        # 4. Modulo to stay within reasonable id length
+        geometry_points = []
+        if self.geometry["type"] == "polygon":
+            geometry_points += list(zip(*self.geometry["geometry"]))[0]
+        else:
+            for geometry in self.geometry["geometry"]:
+                geometry_points += list(zip(*geometry))[0]
+        return int(abs(sum(geometry_points))) % 99999
 
     def generate_name(self):
         # TODO performs deterministic region name generation
