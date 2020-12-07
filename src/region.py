@@ -21,7 +21,7 @@ class Region:
         # TODO implement get_countries
         pass
 
-    def get_neighbours(self) -> Set["Region"]:
+    def get_neighbors(self) -> Set["Region"]:
         # TODO implement get_neighbours
         pass
 

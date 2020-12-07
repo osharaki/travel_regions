@@ -143,10 +143,6 @@ def load_regions(path: str) -> List[Region]:
         return regions
 
 
-def get_neighbors(region: Region) -> List[Region]:
-    pass
-
-
 def get_nearest_node(latlng: Tuple[float, float]) -> Node:
     pass
 
@@ -179,7 +175,7 @@ def points_to_regions(
     os.path.join(Path(".").parent, "output", "regions_test.json")
 ) """
 # regions = load_regions(os.path.join(Path(".").parent, "output", "regions_test.json"))
-classifications = points_to_region(
+classifications = points_to_regions(
     [[-14.269798, -40.821783], [-24.452236, -48.556158], [-38.826944, -71.847173],],
     custom_region_file=os.path.join(Path(".").parent, "output", "regions_test.json"),
 )
