@@ -19,6 +19,18 @@ from utils.file_utils import cluster_to_json, get_communities, read_csv, read_ge
 from haversine import haversine
 
 
+def load_nodes():
+    data = read_csv(
+        "data/communities_-1__with_distance_multi-level_geonames_cities_7.csv"
+    )
+    nodes = []
+    for i, row in enumerate(data):
+        if i == 0:
+            continue  # skip first row (headers)
+        nodes.append(Node(row[0], row[-1], (float(row[-3]), float(row[-2])), row[-4],))
+    return nodes
+
+
 def generate_bounded_regions(
     path: str, level: int = 1, continent: str = None, z_threshold: float = 3
 ) -> List[Region]:
@@ -179,18 +191,19 @@ def points_to_regions(
     return {regions[index].id: points for index, points in classsifications.items()}
 
 
-regions = generate_bounded_regions(
+""" regions = generate_bounded_regions(
     os.path.join(Path(".").parent, "data", "region_files", "level_4_regions.json"),
     level=4,
-)
+) """
 # regions = load_regions(os.path.join(Path(".").parent, "output", "regions_test.json"))
 """ classifications = points_to_regions(
     [[-14.269798, -40.821783], [-24.452236, -48.556158], [-38.826944, -71.847173],],
     custom_region_file=os.path.join(Path(".").parent, "output", "regions_test.json"),
 ) """
-l1_regions = load_regions(level=1)
+# l1_regions = load_regions(level=1)
 """ l2_regions = load_regions(level=2)
 l3_regions = load_regions(level=3)
 l4_regions = load_regions(level=4) """
-get_nearest_node((40.79677, -74.48154), l1_regions)
+# get_nearest_node((40.79677, -74.48154), l1_regions)
+load_nodes()
 
