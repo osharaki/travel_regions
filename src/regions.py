@@ -16,11 +16,13 @@ from polygons import (
 )
 from region import Region
 from utils.file_utils import cluster_to_json, get_communities, read_csv, read_geo_json
+from haversine import haversine
 
 
 def generate_bounded_regions(
     path: str, level: int = 1, continent: str = None, z_threshold: float = 3
 ) -> List[Region]:
+    assert 0 < level < 5, "Level must be in the interval [1, 5)"
     # TODO add available continent options to docs
 
     # TODO Add continent cutouts
@@ -105,7 +107,6 @@ def generate_bounded_regions(
     cluster_to_json(
         {
             "level": level,
-            "IDs": [],  # TODO implement and use id generation function
             "bounding_area": bounding_area,
             "geometries": region_geometries,
             "nodes": nonoutliers_by_community,
@@ -117,11 +118,16 @@ def generate_bounded_regions(
     ###########################################
     # Load communities as instances of Region #
     ###########################################
-    return load_regions(path, level)
+    return load_regions(path)
 
 
-def load_regions(path: str) -> List[Region]:
+def load_regions(path: str = None, level: int = 1) -> List[Region]:
     # Read region file and generate Region objects accordingly
+    # If no path to a custom region file is provided, the default region file for the hierarchical level specified by `level` is used. If, however, a `path` argument is provided, `level` will be ignored and instead that region file is used to load the regions.
+    if not path:
+        path = os.path.join(
+            Path(".").parent, "data", "region_files", f"level_{level}_regions.json"
+        )
     regions = []
     with open(path, "r") as f:
         regions_serialized = json.load(f)
@@ -135,7 +141,7 @@ def load_regions(path: str) -> List[Region]:
                     region_node[0],
                     region_node[-1],
                     (float(region_node[-3]), float(region_node[-2])),
-                    None,
+                    region_node[-4],
                 )
                 for region_node in nodes[i]
             ]
@@ -143,20 +149,22 @@ def load_regions(path: str) -> List[Region]:
         return regions
 
 
-def get_nearest_node(latlng: Tuple[float, float]) -> Node:
-    pass
+def get_nearest_node(point: Tuple[float, float], regions: List[Region]) -> Node:
+    # Uses Haversine distance to return the nearest known node to `point` whose coordinates aren't identical to `point`
+    nodes = [
+        node for region in regions for node in region.nodes if node.latlng != point
+    ]  # extract all nodes
+    distances = [haversine(point, node.latlng) for node in nodes]
+    nearest_node = nodes[distances.index(min(distances))]
+    return nearest_node
 
 
 def points_to_regions(
-    points: List[Tuple[float, float]], level: int = 1, custom_region_file: str = None
+    regions: List[Region],
+    points: List[Tuple[float, float]],
+    level: int = 1,
+    custom_region_file: str = None,
 ) -> Dict[int, List[Tuple[float, float]]]:
-    regions = load_regions(
-        custom_region_file
-        if custom_region_file
-        else os.path.join(
-            Path(".").parent, "output", "level_" + str(level) + "_regions.json"
-        )
-    )
     region_geometries = [region.geometry for region in regions]
 
     region_geometries = [
@@ -171,13 +179,18 @@ def points_to_regions(
     return {regions[index].id: points for index, points in classsifications.items()}
 
 
-""" regions = generate_bounded_regions(
-    os.path.join(Path(".").parent, "output", "regions_test.json")
-) """
+regions = generate_bounded_regions(
+    os.path.join(Path(".").parent, "data", "region_files", "level_4_regions.json"),
+    level=4,
+)
 # regions = load_regions(os.path.join(Path(".").parent, "output", "regions_test.json"))
-classifications = points_to_regions(
+""" classifications = points_to_regions(
     [[-14.269798, -40.821783], [-24.452236, -48.556158], [-38.826944, -71.847173],],
     custom_region_file=os.path.join(Path(".").parent, "output", "regions_test.json"),
-)
-print(classifications)
+) """
+l1_regions = load_regions(level=1)
+""" l2_regions = load_regions(level=2)
+l3_regions = load_regions(level=3)
+l4_regions = load_regions(level=4) """
+get_nearest_node((40.79677, -74.48154), l1_regions)
 
