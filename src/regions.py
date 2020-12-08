@@ -19,21 +19,23 @@ from utils.file_utils import cluster_to_json, get_communities, read_csv, read_ge
 from haversine import haversine
 
 
-def load_nodes():
+def load_nodes() -> Dict[int, Node]:
     data = read_csv(
         "data/communities_-1__with_distance_multi-level_geonames_cities_7.csv"
     )
-    nodes = []
+    nodes = {}
     for i, row in enumerate(data):
         if i == 0:
             continue  # skip first row (headers)
-        nodes.append(Node(row[0], row[-1], (float(row[-3]), float(row[-2])), row[-4],))
+        nodes[row[0]] = Node(
+            row[0], row[-1], (float(row[-3]), float(row[-2])), row[-4],
+        )
     return nodes
 
 
 def generate_bounded_regions(
-    path: str, level: int = 1, continent: str = None, z_threshold: float = 3
-) -> List[Region]:
+    path: str, level: int = 1, continent: str = None, z_threshold: float = 3,
+):
     assert 0 < level < 5, "Level must be in the interval [1, 5)"
     # TODO add available continent options to docs
 
@@ -127,13 +129,10 @@ def generate_bounded_regions(
         path,
     )
 
-    ###########################################
-    # Load communities as instances of Region #
-    ###########################################
-    return load_regions(path)
 
-
-def load_regions(path: str = None, level: int = 1) -> List[Region]:
+def load_regions(
+    nodes: Dict[int, Node], path: str = None, level: int = 1
+) -> List[Region]:
     # Read region file and generate Region objects accordingly
     # If no path to a custom region file is provided, the default region file for the hierarchical level specified by `level` is used. If, however, a `path` argument is provided, `level` will be ignored and instead that region file is used to load the regions.
     if not path:
@@ -145,18 +144,11 @@ def load_regions(path: str = None, level: int = 1) -> List[Region]:
         regions_serialized = json.load(f)
         hierarchical_level = regions_serialized["level"]
         geometries = regions_serialized["geometries"]
-        nodes = regions_serialized["nodes"]
-
+        region_nodes_serialized = regions_serialized["nodes"]
         for i in range(len(geometries)):
-            region_nodes = [
-                Node(
-                    region_node[0],
-                    region_node[-1],
-                    (float(region_node[-3]), float(region_node[-2])),
-                    region_node[-4],
-                )
-                for region_node in nodes[i]
-            ]
+            region_nodes = []
+            for region_node_serialized in region_nodes_serialized[i]:
+                region_nodes.append(nodes[region_node_serialized[0]])
             regions.append(Region(hierarchical_level, geometries[i], region_nodes))
         return regions
 
@@ -191,19 +183,20 @@ def points_to_regions(
     return {regions[index].id: points for index, points in classsifications.items()}
 
 
-""" regions = generate_bounded_regions(
-    os.path.join(Path(".").parent, "data", "region_files", "level_4_regions.json"),
-    level=4,
-) """
-# regions = load_regions(os.path.join(Path(".").parent, "output", "regions_test.json"))
+""" nodes = load_nodes()
+l1_regions = load_regions(nodes, level=1)
+l2_regions = load_regions(nodes, level=2)
+l3_regions = load_regions(nodes, level=3)
+l4_regions = load_regions(nodes, level=4)
+empty_nodes = list(filter(lambda node: not node.regions, nodes.values())) """
+regions = generate_bounded_regions(
+    os.path.join(Path(".").parent, "output", "regions_test.json"), level=1,
+)
+
 """ classifications = points_to_regions(
     [[-14.269798, -40.821783], [-24.452236, -48.556158], [-38.826944, -71.847173],],
     custom_region_file=os.path.join(Path(".").parent, "output", "regions_test.json"),
 ) """
-# l1_regions = load_regions(level=1)
-""" l2_regions = load_regions(level=2)
-l3_regions = load_regions(level=3)
-l4_regions = load_regions(level=4) """
+
 # get_nearest_node((40.79677, -74.48154), l1_regions)
-load_nodes()
 
