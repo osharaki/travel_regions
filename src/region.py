@@ -29,6 +29,15 @@ class Region:
         pass
 
     def get_neighbors(self, regions: List["Region"]) -> Set["Region"]:
+        """
+        Returns all regions whose geometries share at least one point with the calling region. This applies to both single and multi-polygon regions. For example, a multi-polygon region is considered another region's neighbor even if only one of its polygons shares at least one geometry point with that region.
+
+        Args:
+            regions (List[Region]): List of regions to check for neighbor-status. Typically all regions in a hierarchical level
+
+        Returns:
+            Set[Region]: All regions whose geometries share at least one point with the calling region
+        """
         regions.remove(self)
         neighboring_regions = set()
         if self.geometry["type"] == "polygon":
