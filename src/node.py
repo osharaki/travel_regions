@@ -9,6 +9,6 @@ class Node:
 
         self.id = id
         self.name = name
-        self.latlng = (latlng,)
-        self.country = (country,)
+        self.latlng = latlng
+        self.country = country
         self.regions: Dict[int, Region] = {}
