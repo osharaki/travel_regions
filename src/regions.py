@@ -58,7 +58,7 @@ def generate_bounded_regions(
         communities = get_communities(
             communities[0] + communities[1] + communities[2] + communities[3], level
         )  # Level 1 communities 4 and above are very sparsely populated and thus excluded
-
+    community_IDs = list(communities.keys())
     #####################
     # Outlier detection #
     #####################
@@ -121,6 +121,7 @@ def generate_bounded_regions(
     cluster_to_json(
         {
             "level": level,
+            "community_IDs": community_IDs,
             "bounding_area": bounding_area,
             "geometries": region_geometries,
             "nodes": nonoutliers_by_community,
@@ -143,13 +144,18 @@ def load_regions(
     with open(path, "r") as f:
         regions_serialized = json.load(f)
         hierarchical_level = regions_serialized["level"]
+        community_IDs = regions_serialized["community_IDs"]
         geometries = regions_serialized["geometries"]
         region_nodes_serialized = regions_serialized["nodes"]
         for i in range(len(geometries)):
             region_nodes = []
             for region_node_serialized in region_nodes_serialized[i]:
                 region_nodes.append(nodes[region_node_serialized[0]])
-            regions.append(Region(hierarchical_level, geometries[i], region_nodes))
+            regions.append(
+                Region(
+                    hierarchical_level, community_IDs[i], geometries[i], region_nodes
+                )
+            )
         return regions
 
 
@@ -183,15 +189,19 @@ def points_to_regions(
     return {regions[index].id: points for index, points in classsifications.items()}
 
 
-""" nodes = load_nodes()
-l1_regions = load_regions(nodes, level=1)
-l2_regions = load_regions(nodes, level=2)
-l3_regions = load_regions(nodes, level=3)
-l4_regions = load_regions(nodes, level=4)
-empty_nodes = list(filter(lambda node: not node.regions, nodes.values())) """
-regions = generate_bounded_regions(
-    os.path.join(Path(".").parent, "output", "regions_test.json"), level=1,
-)
+# nodes = load_nodes()
+# l1_regions = load_regions(nodes, level=1)
+# l2_regions = load_regions(nodes, level=2)
+# l3_regions = load_regions(nodes, level=3)
+# l4_regions = load_regions(nodes, level=4)
+# empty_nodes = list(filter(lambda node: not node.regions, nodes.values()))
+""" for level in range(2, 5):
+    regions = generate_bounded_regions(
+        os.path.join(
+            Path(".").parent, "data", "region_files", f"level_{level}_regions.json"
+        ),
+        level=level,
+    ) """
 
 """ classifications = points_to_regions(
     [[-14.269798, -40.821783], [-24.452236, -48.556158], [-38.826944, -71.847173],],
