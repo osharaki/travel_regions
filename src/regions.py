@@ -189,11 +189,14 @@ def points_to_regions(
     return {regions[index].id: points for index, points in classsifications.items()}
 
 
-# nodes = load_nodes()
+nodes = load_nodes()
 # l1_regions = load_regions(nodes, level=1)
-# l2_regions = load_regions(nodes, level=2)
+l2_regions = load_regions(nodes, level=2)
 # l3_regions = load_regions(nodes, level=3)
 # l4_regions = load_regions(nodes, level=4)
+print(
+    f"Region {l2_regions[0].id}'s neighbors are {[neighbor.id for neighbor in l2_regions[0].get_neighbors(l2_regions)]}"
+)
 # empty_nodes = list(filter(lambda node: not node.regions, nodes.values()))
 """ for level in range(2, 5):
     regions = generate_bounded_regions(
