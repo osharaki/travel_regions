@@ -30,6 +30,14 @@ class Region:
         # TODO implement get_neighbours
         pass
 
+    def get_parent(self) -> "Region":
+        # TODO finds this region's parent
+        pass
+
+    def get_children(self) -> Set["Region"]:
+        # TODO finds the regions on the next level down that are "contained" within this region
+        pass
+
     def generate_id(self) -> str:
         return f"{self.level}{self.community_id}"
 
