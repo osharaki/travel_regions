@@ -29,38 +29,42 @@ class Region:
         pass
 
     def get_neighbors(self, regions: List["Region"]) -> Set["Region"]:
-        # TODO Improve code quality
         regions.remove(self)
         neighboring_regions = set()
         if self.geometry["type"] == "polygon":
-            polygon = Polygon(self.geometry["geometry"])
-            for region in regions:
-                if region.geometry["type"] == "polygon":
-                    region_polygon = Polygon(region.geometry["geometry"])
-                    if polygon.touches(region_polygon):
-                        neighboring_regions.add(region)
-                else:
+            ego_region_polygon = Polygon(self.geometry["geometry"])
+            for candidate_region in regions:
+                if candidate_region.geometry["type"] == "polygon":
+                    candidate_region_polygon = Polygon(
+                        candidate_region.geometry["geometry"]
+                    )
+                    if ego_region_polygon.touches(candidate_region_polygon):
+                        neighboring_regions.add(candidate_region)
+                elif candidate_region.geometry["type"] == "multipolygon":
                     for region_polygon in [
-                        Polygon(geometry) for geometry in region.geometry["geometry"]
+                        Polygon(geometry)
+                        for geometry in candidate_region.geometry["geometry"]
                     ]:
-                        if polygon.touches(region_polygon):
-                            neighboring_regions.add(region)
-        else:
-            for polygon in [
+                        if ego_region_polygon.touches(region_polygon):
+                            neighboring_regions.add(candidate_region)
+        elif self.geometry["type"] == "multipolygon":
+            for ego_region_polygon in [
                 Polygon(geometry) for geometry in self.geometry["geometry"]
             ]:
-                for region in regions:
-                    if region.geometry["type"] == "polygon":
-                        region_polygon = Polygon(region.geometry["geometry"])
-                        if polygon.touches(region_polygon):
-                            neighboring_regions.add(region)
+                for candidate_region in regions:
+                    if candidate_region.geometry["type"] == "polygon":
+                        candidate_region_polygon = Polygon(
+                            candidate_region.geometry["geometry"]
+                        )
+                        if ego_region_polygon.touches(candidate_region_polygon):
+                            neighboring_regions.add(candidate_region)
                     else:
                         for region_polygon in [
                             Polygon(geometry)
-                            for geometry in region.geometry["geometry"]
+                            for geometry in candidate_region.geometry["geometry"]
                         ]:
-                            if polygon.touches(region_polygon):
-                                neighboring_regions.add(region)
+                            if ego_region_polygon.touches(region_polygon):
+                                neighboring_regions.add(candidate_region)
         return neighboring_regions
 
     def get_parent(self) -> "Region":
