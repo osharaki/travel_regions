@@ -56,4 +56,4 @@ Custom region files can be generated using `generate_bounded_regions()`. For exa
 generate_bounded_regions('path/to/file/level_2_region.json', level=2)
 ```
 
-See function [definition](https://github.com/osharaki/regions/blob/master/src/regions.py#L134) for full list of parameters.
+See function definition for full list of parameters.
