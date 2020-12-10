@@ -20,6 +20,12 @@ from haversine import haversine
 
 
 def load_nodes() -> Dict[int, Node]:
+    """
+    Parses the communities data file creates an Node instance for each location.
+
+    Returns:
+        Dict[int, Node]: The generated Node instances
+    """
     data = read_csv(
         "data/communities_-1__with_distance_multi-level_geonames_cities_7.csv"
     )
@@ -36,6 +42,26 @@ def load_nodes() -> Dict[int, Node]:
 def generate_bounded_regions(
     path: str, level: int = 1, continent: str = None, z_threshold: float = 3,
 ):
+    """
+    Generates a region file for the specified hierarchical level. Region files are JSON files with the following structure:
+    {
+        "level": int,
+        "community_IDs": [int],
+        "bounding_area": [(float, float)],
+        "geometries": [{
+            "type": str,
+            "geometry": [(float, float)],
+        }],
+        "nodes": [[[str]]],
+        "outliers": [[[str]]]
+    }
+
+    Args:
+        path (str): The path to the region file, e.g. "path/to/file/level_2_region.json"
+        level (int, optional): The hierarchical level. Defaults to 1.
+        continent (str, optional): One of SA, NA, EU, AS. If specified, regions are constrained to a specific continent (Not yet available). Defaults to None.
+        z_threshold (float, optional): Determines outlier elimination strictness. The higher this value the shorter the distance required for a node to be considered an outlier. Defaults to 3.
+    """
     assert 0 < level < 5, "Level must be in the interval [1, 5)"
     # TODO add available continent options to docs
 
@@ -134,6 +160,18 @@ def generate_bounded_regions(
 def load_regions(
     nodes: Dict[int, Node], path: str = None, level: int = 1
 ) -> List[Region]:
+    # TODO see if function link is shown properly in Sphinx
+    """
+    Generates Regions from a region file. If no `path` to a custom region file is provided, the default region file for the hierarchical level specified by `level` is used. If, however, a `path` argument is provided, `level` will be ignored and instead that region file is used to load the regions.
+
+    Args:
+        nodes (Dict[int, Node]): The nodes contained in the regions to be generated. Typically the result of running load_nodes(). The nodes are mapped to the appropriate regions as the regions are being created.
+        path (str, optional): An optional path to a custom region file (see :func:`~load_bounded_regions`). If specified, causes `level` to be ignored. Defaults to None.
+        level (int, optional): The hierarchical level for which to generate the regions. Ignored if `path` is not None. Defaults to 1.
+
+    Returns:
+        List[Region]: The regions generated from the region file
+    """
     # Read region file and generate Region objects accordingly
     # If no path to a custom region file is provided, the default region file for the hierarchical level specified by `level` is used. If, however, a `path` argument is provided, `level` will be ignored and instead that region file is used to load the regions.
     if not path:
@@ -160,7 +198,16 @@ def load_regions(
 
 
 def get_nearest_node(point: Tuple[float, float], regions: List[Region]) -> Node:
-    # Uses Haversine distance to return the nearest known node to `point` whose coordinates aren't identical to `point`
+    """
+    Uses Haversine distance to return the nearest known node to `point` whose coordinates aren't identical to `point`.
+
+    Args:
+        point (Tuple[float, float]): The coordinates of the point whose nearest node is to be found
+        regions (List[Region]): The regions where the search is to be performed
+
+    Returns:
+        Node: The closest, non-identical node to point
+    """
     nodes = [
         node for region in regions for node in region.nodes if node.latlng != point
     ]  # extract all nodes
@@ -172,6 +219,7 @@ def get_nearest_node(point: Tuple[float, float], regions: List[Region]) -> Node:
 def points_to_regions(
     regions: List[Region], points: List[Tuple[float, float]],
 ) -> Dict[str, List[Tuple[float, float]]]:
+    # TODO add documentation
     region_geometries = [region.geometry for region in regions]
 
     region_geometries = [
