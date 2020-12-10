@@ -1,6 +1,7 @@
 __pycache__
 .vscode
 output/*
+data/geopandas_exports
 src/main.py
 
 !output/.gitkeep
