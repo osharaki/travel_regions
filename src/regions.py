@@ -174,7 +174,7 @@ def points_to_regions(
     points: List[Tuple[float, float]],
     level: int = 1,
     custom_region_file: str = None,
-) -> Dict[int, List[Tuple[float, float]]]:
+) -> Dict[str, List[Tuple[float, float]]]:
     region_geometries = [region.geometry for region in regions]
 
     region_geometries = [
@@ -195,7 +195,7 @@ l2_regions = load_regions(nodes, level=2)
 # l3_regions = load_regions(nodes, level=3)
 # l4_regions = load_regions(nodes, level=4)
 print(
-    f"Region {l2_regions[0].id}'s neighbors are {[neighbor.id for neighbor in l2_regions[0].get_neighbors(l2_regions)]}"
+    f"Region {l2_regions[1].id}'s neighbors are {[neighbor.id for neighbor in l2_regions[1].get_neighbors(l2_regions)]}"
 )
 # empty_nodes = list(filter(lambda node: not node.regions, nodes.values()))
 """ for level in range(2, 5):
