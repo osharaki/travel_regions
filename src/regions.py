@@ -170,10 +170,7 @@ def get_nearest_node(point: Tuple[float, float], regions: List[Region]) -> Node:
 
 
 def points_to_regions(
-    regions: List[Region],
-    points: List[Tuple[float, float]],
-    level: int = 1,
-    custom_region_file: str = None,
+    regions: List[Region], points: List[Tuple[float, float]],
 ) -> Dict[str, List[Tuple[float, float]]]:
     region_geometries = [region.geometry for region in regions]
 
@@ -187,29 +184,3 @@ def points_to_regions(
     ]  # convert region geometries to Shapely polygons
     classsifications = classify_points(points, region_geometries)
     return {regions[index].id: points for index, points in classsifications.items()}
-
-
-nodes = load_nodes()
-# l1_regions = load_regions(nodes, level=1)
-l2_regions = load_regions(nodes, level=2)
-# l3_regions = load_regions(nodes, level=3)
-# l4_regions = load_regions(nodes, level=4)
-print(
-    f"Region {l2_regions[1].id}'s neighbors are {[neighbor.id for neighbor in l2_regions[1].get_neighbors(l2_regions)]}"
-)
-# empty_nodes = list(filter(lambda node: not node.regions, nodes.values()))
-""" for level in range(2, 5):
-    regions = generate_bounded_regions(
-        os.path.join(
-            Path(".").parent, "data", "region_files", f"level_{level}_regions.json"
-        ),
-        level=level,
-    ) """
-
-""" classifications = points_to_regions(
-    [[-14.269798, -40.821783], [-24.452236, -48.556158], [-38.826944, -71.847173],],
-    custom_region_file=os.path.join(Path(".").parent, "output", "regions_test.json"),
-) """
-
-# get_nearest_node((40.79677, -74.48154), l1_regions)
-
