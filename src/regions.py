@@ -43,18 +43,7 @@ def generate_bounded_regions(
     path: str, level: int = 1, continent: str = None, z_threshold: float = 3,
 ):
     """
-    Generates a region file for the specified hierarchical level. Region files are JSON files with the following structure:
-    {
-        "level": int,
-        "community_IDs": [int],
-        "bounding_area": [(float, float)],
-        "geometries": [{
-            "type": str,
-            "geometry": [(float, float)],
-        }],
-        "nodes": [[[str]]],
-        "outliers": [[[str]]]
-    }
+    Generates a region file for the specified hierarchical level.
 
     Args:
         path (str): The path to the region file, e.g. "path/to/file/level_2_region.json"
@@ -166,7 +155,7 @@ def load_regions(
 
     Args:
         nodes (Dict[int, Node]): The nodes contained in the regions to be generated. Typically the result of running load_nodes(). The nodes are mapped to the appropriate regions as the regions are being created.
-        path (str, optional): An optional path to a custom region file (see :func:`~load_bounded_regions`). If specified, causes `level` to be ignored. Defaults to None.
+        path (str, optional): An optional path to a custom region file (see :func:`~generate_bounded_regions`). If specified, causes `level` to be ignored. Defaults to None.
         level (int, optional): The hierarchical level for which to generate the regions. Ignored if `path` is not None. Defaults to 1.
 
     Returns:
@@ -219,7 +208,16 @@ def get_nearest_node(point: Tuple[float, float], regions: List[Region]) -> Node:
 def points_to_regions(
     regions: List[Region], points: List[Tuple[float, float]],
 ) -> Dict[str, List[Tuple[float, float]]]:
-    # TODO add documentation
+    """
+    Given a list of points, maps these points to the regions that contain them
+
+    Args:
+        regions (List[Region]): The regions to search for the points in. Typically the result of :func:`~load_regions` Can be be combination of regions from multiple hierarchical levels.
+        points (List[Tuple[float, float]]): The points to whose regions are to be found
+
+    Returns:
+        Dict[str, List[Tuple[float, float]]]: A mapping from region IDs to points. A point may be mapped to multiple regions if regions from multiple hierarchical levels were used.
+    """
     region_geometries = [region.geometry for region in regions]
 
     region_geometries = [
