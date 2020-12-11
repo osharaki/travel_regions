@@ -161,8 +161,6 @@ def load_regions(
     Returns:
         List[Region]: The regions generated from the region file
     """
-    # Read region file and generate Region objects accordingly
-    # If no path to a custom region file is provided, the default region file for the hierarchical level specified by `level` is used. If, however, a `path` argument is provided, `level` will be ignored and instead that region file is used to load the regions.
     if not path:
         path = os.path.join(
             Path(".").parent, "data", "region_files", f"level_{level}_regions.json"
