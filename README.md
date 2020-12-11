@@ -25,7 +25,7 @@ l2_regions = load_regions(nodes, level=2)
 Now, one of the following, currently supported operations can be executed.
 
 ```python
-# Get nearest Node to the given coordinates
+# Get nearest known node to the given coordinates
 nearest_node = get_nearest_node((40.781459, -73.966551), l2_regions)
 
 # Find the regions that contain the given points
