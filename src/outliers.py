@@ -1,4 +1,5 @@
 from typing import Dict, List, Tuple
+from haversine import haversine
 from scipy import stats
 import operator
 from functools import reduce
@@ -7,7 +8,7 @@ from math import sqrt
 
 def detect_outliers_z_score(data, threshold=3) -> List[Tuple[int, float]]:
     centroid = find_centroid(data)
-    distancesFromCenter = [find_distance(point, centroid) for point in data]
+    distancesFromCenter = [haversine(point, centroid) for point in data]
     zScores: float = stats.zscore(distancesFromCenter)
     outliers: List[Tuple[int, float]] = list(
         filter(lambda x: abs(x[1]) > threshold, enumerate(zScores))
