@@ -1,10 +1,14 @@
-from functools import reduce
 from typing import *
 
 from shapely import geometry
 from shapely.geometry import Polygon
 from shapely.geometry.multipolygon import MultiPolygon
+
+from collections import Counter
+
 from node import Node
+
+import pycountry
 
 
 class Region:
@@ -24,9 +28,32 @@ class Region:
         for node in nodes:
             node.regions[level] = self
 
-    def get_countries(self, threshold: int = 1) -> Set["Region"]:
-        # TODO implement get_countries
-        pass
+    def get_countries(self, threshold: int = 1) -> Dict[str, int]:
+        """
+        Returns a list of countries with a minimum number of cities contained within the region
+
+        Args:
+            threshold (int, optional): The minimum number of a country's cities located withing the region in order for the country to be included. Defaults to 1.
+
+        Returns:
+            Dict[str, int]: The countries fulfilling the threshold along with how many of their cities are in the region
+        """
+        countries = []
+        for node in self.nodes:
+            country = pycountry.countries.get(alpha_2=f"{node.country}")
+            if country != None:
+                countries.append(country.name)
+        country_counts = Counter(countries)
+        country_counts = list(
+            filter(
+                lambda country_count: country_count[1] >= threshold,
+                country_counts.items(),
+            )
+        )
+        country_counts = {
+            country_count[0]: country_count[1] for country_count in country_counts
+        }
+        return country_counts
 
     def get_neighbors(self, regions: List["Region"]) -> Set["Region"]:
         """
