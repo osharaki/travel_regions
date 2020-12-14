@@ -17,6 +17,7 @@ from polygons import (
 from region import Region
 from utils.file_utils import cluster_to_json, get_communities, read_csv, read_geo_json
 from haversine import haversine
+from pycountry_convert import *
 
 
 def load_nodes() -> Dict[int, Node]:
@@ -42,6 +43,7 @@ def load_nodes() -> Dict[int, Node]:
 def generate_bounded_regions(
     path: str, level: int = 1, continent: str = None, z_threshold: float = 3,
 ):
+    # FIXME remove continent parameter
     """
     Generates a region file for the specified hierarchical level.
 
@@ -149,7 +151,6 @@ def generate_bounded_regions(
 def load_regions(
     nodes: Dict[int, Node], path: str = None, level: int = 1
 ) -> List[Region]:
-    # TODO see if function link is shown properly in Sphinx
     """
     Generates Regions from a region file. If no `path` to a custom region file is provided, the default region file for the hierarchical level specified by `level` is used. If, however, a `path` argument is provided, `level` will be ignored and instead that region file is used to load the regions.
 
@@ -182,6 +183,38 @@ def load_regions(
                 )
             )
         return regions
+
+
+def get_continent_regions(regions: List[Region], continent: str) -> List[Region]:
+    """
+    Given a list of regions, returns those regions with at least one node in the specified continent
+
+    Args:
+        regions (List[Region]): List of regions. Typically retrieved by calling :func:`~load_regions()` or 
+        continent (str): One of SA, NA, EU, AS, AF, OC, or AN
+
+    Returns:
+        List[Region]: Regions with at least one node in the given continent
+    """
+    continent_regions = set()
+    for region in regions:
+        for country in region.get_countries().keys():
+            country = country_name_to_country_alpha2(country, cn_name_format="default")
+            try:
+                country_continent = country_alpha2_to_continent_code(country)
+                # FIXME Remove nested try/except and add a continue here
+                # Nested try/except was only added for development to see which country codes need to be handled
+            except KeyError:
+                try:
+                    country_continent = {"EE": "AF"}[country]
+                except KeyError as key:
+                    print(
+                        f"Country code {key} found neither in pycountry_convert nor in custom dict!"
+                    )
+                    continue
+            if country_continent == continent:
+                continent_regions.add(region)
+    return list(continent_regions)
 
 
 def get_nearest_node(point: Tuple[float, float], regions: List[Region]) -> Node:
