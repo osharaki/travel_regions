@@ -34,7 +34,7 @@ def generate_convex_hull(points: List[Tuple[float, float]]):
 
 def generate_constrained_voronoi_diagram(
     points: List[List[float]],
-    containingArea: geometry.Polygon,
+    containing_area: geometry.Polygon,
     communities: List[List[List[float]]] = None,
 ) -> Union[List[List[geometry.Polygon]], List[geometry.Polygon]]:
     """
@@ -42,7 +42,7 @@ def generate_constrained_voronoi_diagram(
 
     Args:
         points (List[List[float]]): A list of coordinates.
-        containingArea (geometry.Polygon): A Shapely polygon that forms the boundary of the generated Voronoi diagram. All `points` must be contained within this area.
+        containing_area (geometry.Polygon): A Shapely polygon that forms the boundary of the generated Voronoi diagram. All `points` must be contained within this area.
         communities (List[List[List[float]]], optional): An optional mapping that associates each community with the points (provided as coordinates) belonging to it. Defaults to None.
 
     Returns:
@@ -52,12 +52,12 @@ def generate_constrained_voronoi_diagram(
 
     coords = coords_to_points(points)
     # use only the points inside the geographic area
-    containedPoints = []
+    contained_points = []
     for p in coords:  # converts to shapely Point
-        if p.within(containingArea):
-            containedPoints.append(p)
+        if p.within(containing_area):
+            contained_points.append(p)
     poly_shapes, pts, poly_to_pt_assignments = voronoi_regions_from_coords(
-        points, containingArea
+        points, containing_area
     )
     if communities:
         polygons = []
@@ -73,22 +73,22 @@ def generate_constrained_voronoi_diagram(
 
 
 def merge_regions(
-    *voronoiCommunities: List[geometry.Polygon],
+    *voronoi_communities: List[geometry.Polygon],
 ) -> Union[List[geometry.MultiPolygon], List[geometry.Polygon]]:
     """
     This function takes an arbitrary number of communities, each represented as a list of Shapely polygons and combines each community's regions into a single unified region.
 
     Args:
-        *voronoiCommunties: Arbitrary number of communities, each represented as a list of Shapely polygons.
+        *voronoi_communities: Arbitrary number of communities, each represented as a list of Shapely polygons.
 
     Returns:
         Union[List[geometry.MultiPolygon], List[geometry.Polygon]]: Communities each represented by either a Shapely Polygon or MultiPolygon depending on whether the community's original regions were spatially contiguous.
     """
-    mergedRegions = []
-    for communityRegions in voronoiCommunities:
-        mergedRegion = cascaded_union(communityRegions)
-        mergedRegions.append(mergedRegion)
-    return mergedRegions
+    merged_regions = []
+    for community_regions in voronoi_communities:
+        merged_region = cascaded_union(community_regions)
+        merged_regions.append(merged_region)
+    return merged_regions
 
 
 def plot_polygon(polygon, figure):
@@ -103,18 +103,18 @@ def plot_polygon(polygon, figure):
 
 
 # Convert Shapely regions to list coordinates
-def extract_geometries(*shapelyPolygons) -> List[Dict]:
+def extract_geometries(*shapely_polygons) -> List[Dict]:
     """
     Given one or more Shapely polygons/multipolygons, extracts their geometries as lists of coordinates.
 
     Args:
-        *shapelyPolygons: Arbitrary number of Shapely polygons.
+        *shapely_polygons: Arbitrary number of Shapely polygons.
 
     Returns:
         List[Dict] -- List of coordinates representing the geometries of the given polygons.
     """
     geometries = []
-    for polygon in shapelyPolygons:
+    for polygon in shapely_polygons:
         geometries.append(
             {"type": "polygon", "geometry": list(zip(*polygon.exterior.coords.xy)),}
             if not isinstance(polygon, geometry.MultiPolygon)

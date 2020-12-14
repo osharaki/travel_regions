@@ -8,10 +8,10 @@ from math import sqrt
 
 def detect_outliers_z_score(data, threshold=3) -> List[Tuple[int, float]]:
     centroid = find_centroid(data)
-    distancesFromCenter = [haversine(point, centroid) for point in data]
-    zScores: float = stats.zscore(distancesFromCenter)
+    distances_from_center = [haversine(point, centroid) for point in data]
+    z_scores: float = stats.zscore(distances_from_center)
     outliers: List[Tuple[int, float]] = list(
-        filter(lambda x: abs(x[1]) > threshold, enumerate(zScores))
+        filter(lambda x: abs(x[1]) > threshold, enumerate(z_scores))
     )
     return outliers
 
@@ -19,9 +19,9 @@ def detect_outliers_z_score(data, threshold=3) -> List[Tuple[int, float]]:
 def find_centroid(data):
     x, y = zip(*data)
     size = len(x)
-    xCenter = sum(x) / size
-    yCenter = sum(y) / size
-    return (xCenter, yCenter)
+    x_center = sum(x) / size
+    y_center = sum(y) / size
+    return (x_center, y_center)
 
 
 def find_distance(a, b):
@@ -36,10 +36,15 @@ def find_distance(a, b):
         float: Distance between a and b.
     """
     dimensions = zip(a, b)
-    dimesionsSubtracted = map(
+    dimensions_subtracted = map(
         lambda dimension: reduce(operator.sub, dimension), dimensions
     )
     distance = sqrt(
-        sum([dimensionSubtracted ** 2 for dimensionSubtracted in dimesionsSubtracted])
+        sum(
+            [
+                dimension_subtracted ** 2
+                for dimension_subtracted in dimensions_subtracted
+            ]
+        )
     )
     return distance

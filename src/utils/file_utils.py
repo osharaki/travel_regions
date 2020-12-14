@@ -6,9 +6,9 @@ from typing import List, Dict
 
 def read_csv(path: str) -> List[List[str]]:
     with open(path, newline="", encoding="utf-8",) as csvfile:
-        csvReader = csv.reader(csvfile, delimiter=",")
+        csv_reader = csv.reader(csvfile, delimiter=",")
         data: List[str] = []
-        for row in csvReader:
+        for row in csv_reader:
             data.append(row)
         return data
 
@@ -31,9 +31,9 @@ def write_csv(
     path: str = "output/data.csv",
 ):
     with open(path, "w", newline="", encoding="utf-8") as csvfile:
-        csvWriter = csv.writer(csvfile, delimiter=",")
-        csvWriter.writerow(headers)
-        csvWriter.writerows(data)
+        csv_writer = csv.writer(csvfile, delimiter=",")
+        csv_writer.writerow(headers)
+        csv_writer.writerows(data)
 
 
 ######################
@@ -54,26 +54,26 @@ def get_max_in_col(col: int) -> int:
         newline="",
         encoding="utf-8",
     ) as csvfile:
-        csvReader = csv.reader(csvfile, delimiter=",")
-        maxComm1 = -1
-        for i, row in enumerate(csvReader):
+        csv_reader = csv.reader(csvfile, delimiter=",")
+        max_comm1 = -1
+        for i, row in enumerate(csv_reader):
             if i == 0:
                 continue  # skip first row (headers)
             comm1 = int(row[col])
-            if comm1 > maxComm1:
-                maxComm1 = comm1
-        return maxComm1
+            if comm1 > max_comm1:
+                max_comm1 = comm1
+        return max_comm1
 
 
 def get_communities(
-    data: List[List[str]], commLevel: int
+    data: List[List[str]], comm_level: int
 ) -> Dict[int, List[List[str]]]:
     """
     Creates a mapping that assigns to each community the location entries belonging to it.
 
     Args:
         data (List[List[str]]): The location data to be filtered. Each location is expected to correspond to the form: community_1,community_2,community_3,community_4,community_5,community_6,country_code,latitude,longitude,place_name.
-        commLevel (int): The community level in the region hierarchy.
+        comm_level (int): The community level in the region hierarchy.
 
     Returns:
         Dict[int, List[List[str]]]: The mapping between communities to location entries.
@@ -82,14 +82,14 @@ def get_communities(
     for i, row in enumerate(data):
         if i == 0:
             continue  # skip first row (headers)
-        community: int = int(row[commLevel])
+        community: int = int(row[comm_level])
         if community not in communities:
             communities[
                 community
             ] = []  # Create community entry in dict if it doesn't exist
         communities[community].append(
             row
-        )  # Retrieve all communities on commLevel if commId is not ommited
+        )  # Retrieve all communities on comm_level if commId is not ommited
     return communities
 
 
