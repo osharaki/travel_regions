@@ -1,6 +1,6 @@
 ## Environment setup
 
-Before the code can be run, all module dependecies must be installed.
+Before the code can be run, all module dependencies must be installed.
 
 1. Clone this repository
 2. Navigate to its root directory
@@ -38,6 +38,9 @@ region_mappings = points_to_regions(l2_regions, points)
 
 # Get a region's neighbors
 neighboring_regions =  l2_regions[1].get_neighbors(l2_regions)
+
+# Filter regions by continent
+regions_south_america = get_continent_regions(l2_regions, "SA")
 ```
 
 ## Region files
@@ -57,3 +60,7 @@ generate_bounded_regions('path/to/file/level_2_region.json', level=2)
 ```
 
 See function definition for full list of parameters.
+
+## Visualization
+
+[Travel Regions Visualizer](https://github.com/osharaki/travel_regions_visualizer) is a simple JavaScript library built to interpret region files and visualize them using Leaflet.
