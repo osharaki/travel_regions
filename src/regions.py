@@ -3,8 +3,8 @@ import os
 from pathlib import Path
 from typing import Dict, List, Tuple
 from shapely.geometry.multipolygon import MultiPolygon
-
 from shapely.geometry.polygon import Polygon
+from fuzzysearch import find_near_matches
 
 from node import Node
 from outliers import detect_outliers_z_score
@@ -185,6 +185,14 @@ def load_regions(
         return regions
 
 
+def find_node(name: str, nodes: List[Node]) -> List[Node]:
+    hits = []
+    for node in nodes:
+        matches = find_near_matches(name, node.name, max_l_dist=1)
+        if matches:
+            hits.append(node)
+
+
 def get_continent_regions(regions: List[Region], continent: str) -> List[Region]:
     """
     Given a list of regions, returns those regions with at least one node in the specified continent
@@ -206,7 +214,7 @@ def get_continent_regions(regions: List[Region], continent: str) -> List[Region]
                 # Nested try/except was only added for development to see which country codes need to be handled
             except KeyError:
                 try:
-                    country_continent = {"EE": "AF"}[country]
+                    country_continent = {"EH": "AF", "VA": "EU", "PN": "OC"}[country]
                 except KeyError as key:
                     print(
                         f"Country code {key} found neither in pycountry_convert nor in custom dict!"
