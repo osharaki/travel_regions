@@ -14,7 +14,7 @@ Before the code can be run, all module dependencies must be installed.
 
 ## Usage
 
-First, [Node](/src/Node.py) and [Region](/src/Region.py) objects need to be instantiated. These will be needed for all subsequent operations.
+First, [Node](/src/node.py) and [Region](/src/region.py) objects need to be instantiated. These will be needed for all subsequent operations.
 
 ```python
 from regions import *
