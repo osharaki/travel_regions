@@ -185,12 +185,41 @@ def load_regions(
         return regions
 
 
+def get_node(id: str, nodes: List[Node]) -> Node:
+    """
+    Returns the node with the given `id` from the provided list
+
+    Args:
+        id (str): ID of node to be retrieved
+        nodes (List[Node]): List of nodes to be searched. Typically the result
+        of :func:`~load_nodes()`. 
+
+    Returns:
+        Node: Node with matching ID
+    """
+    for node in nodes:
+        if node.id == id:
+            return node
+
+
 def find_node(name: str, nodes: List[Node]) -> List[Node]:
+    """
+    Searches for a node by name and returns all approximate matches
+
+    Args:
+        name (str): The search term
+        nodes (List[Node]): A list of nodes to be searched for matches. Typically the result
+        of :func:`~load_nodes()`.
+
+    Returns:
+        List[Node]: All nodes whose names fulfill the matching criterea
+    """
     hits = []
     for node in nodes:
         matches = find_near_matches(name, node.name, max_l_dist=1)
         if matches:
             hits.append(node)
+    return hits
 
 
 def get_continent_regions(regions: List[Region], continent: str) -> List[Region]:
