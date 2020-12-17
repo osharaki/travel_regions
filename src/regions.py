@@ -197,14 +197,31 @@ def load_regions(
         return regions
 
 
+def get_region(id: str, regions: List[Region]) -> Region:
+    """
+    Returns the region with the given `id` from the provided list
+
+    Args:
+        id (str)
+        regions (List[Region]): List of regions to be searched. Typically the result
+            of :func:`~load_regions()`.
+
+    Returns:
+        Region: Region with matching ID
+    """
+    for region in regions:
+        if region.id == id:
+            return region
+
+
 def get_node(id: str, nodes: List[Node]) -> Node:
     """
     Returns the node with the given `id` from the provided list
 
     Args:
-        id (str): ID of node to be retrieved
+        id (str)
         nodes (List[Node]): List of nodes to be searched. Typically the result
-        of :func:`~load_nodes()`. 
+            of :func:`~load_nodes()`. 
 
     Returns:
         Node: Node with matching ID
@@ -221,7 +238,7 @@ def find_node(name: str, nodes: List[Node]) -> List[Node]:
     Args:
         name (str): The search term
         nodes (List[Node]): A list of nodes to be searched for matches. Typically the result
-        of :func:`~load_nodes()`.
+            of :func:`~load_nodes()`.
 
     Returns:
         List[Node]: All nodes whose names fulfill the matching criterea
