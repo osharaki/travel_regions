@@ -30,13 +30,15 @@ class Region:
 
     def get_countries(self, threshold: int = 1) -> Dict[str, int]:
         """
-        Returns a list of countries with a minimum number of cities contained within the region
+        Returns countries with a minimum number of cities contained within the
+        region
 
-        Args:
-            threshold (int, optional): The minimum number of a country's cities located withing the region in order for the country to be included. Defaults to 1.
+        Args: threshold (int, optional): The minimum number of a country's
+            cities located within the region in order for the country to be
+            included. Defaults to 1.
 
-        Returns:
-            Dict[str, int]: The countries fulfilling the threshold along with how many of their cities are in the region
+        Returns: Dict[str, int]: The countries fulfilling the threshold along
+            with how many of their cities are in the region
         """
         countries = []
         for node in self.nodes:

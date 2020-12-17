@@ -48,14 +48,14 @@ def generate_bounded_regions(
     Generates a region file for the specified hierarchical level.
 
     Args:
-        path (str): The path to the region file, e.g. "path/to/file/level_2_region.json"
+        path (str): The path to the region file, e.g. ``path/to/file/level_2_region.json``
         level (int, optional): The hierarchical level. Defaults to 1.
-        continent (str, optional): One of SA, NA, EU, AS. If specified, regions
-        are constrained to a specific continent (Not yet available). Defaults to
-        None.
+        continent (str, optional): One of **SA, NA, EU, AS**. If specified, regions
+            are constrained to a specific continent (Not yet available). Defaults to
+            None.
         z_threshold (float, optional): Determines outlier elimination
-        strictness. The higher this value the shorter the distance required for
-        a node to be considered an outlier. Defaults to 3.
+            strictness. The higher this value the shorter the distance required for
+            a node to be considered an outlier. Defaults to 3.
     """
     assert 0 < level < 5, "Level must be in the interval [1, 5)"
     # TODO add available continent options to docs
@@ -163,13 +163,13 @@ def load_regions(
 
     Args:
         nodes (Dict[int, Node]): The nodes contained in the regions to be
-        generated. Typically the result of running load_nodes(). The nodes are
-        mapped to the appropriate regions as the regions are being created.
+            generated. Typically the result of running load_nodes(). The nodes are
+            mapped to the appropriate regions as the regions are being created.
         path (str, optional): An optional path to a custom region file (see
-        :func:`~generate_bounded_regions`). If specified, causes `level` to be
-        ignored. Defaults to None.
+            :func:`~generate_bounded_regions`). If specified, causes `level` to be
+            ignored. Defaults to None.
         level (int, optional): The hierarchical level for which to generate the
-        regions. Ignored if `path` is not None. Defaults to 1.
+            regions. Ignored if `path` is not None. Defaults to 1.
 
     Returns:
         List[Region]: The regions generated from the region file
@@ -202,7 +202,7 @@ def get_region(id: str, regions: List[Region]) -> Region:
     Returns the region with the given `id` from the provided list
 
     Args:
-        id (str)
+        id (str): Region ID
         regions (List[Region]): List of regions to be searched. Typically the result
             of :func:`~load_regions()`.
 
@@ -219,7 +219,7 @@ def get_node(id: str, nodes: List[Node]) -> Node:
     Returns the node with the given `id` from the provided list
 
     Args:
-        id (str)
+        id (str): Node ID
         nodes (List[Node]): List of nodes to be searched. Typically the result
             of :func:`~load_nodes()`. 
 
@@ -258,8 +258,8 @@ def get_continent_regions(regions: List[Region], continent: str) -> List[Region]
 
     Args:
         regions (List[Region]): List of regions. Typically retrieved by calling
-        :func:`~load_regions()` or 
-        continent (str): One of SA, NA, EU, AS, AF, OC, or AN
+            :func:`~load_regions()` or continent (str): One of SA, NA, EU, AS, AF,
+            OC, or AN
 
     Returns:
         List[Region]: Regions with at least one node in the given continent
@@ -314,8 +314,8 @@ def points_to_regions(
 
     Args:
         regions (List[Region]): The regions to search for the points in.
-        Typically the result of :func:`~load_regions` Can be be combination of
-        regions from multiple hierarchical levels.
+            Typically the result of :func:`~load_regions` Can be be combination of
+            regions from multiple hierarchical levels.
         points (List[Tuple[float, float]]): The points to whose regions are to be found
 
     Returns:
