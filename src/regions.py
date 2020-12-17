@@ -50,8 +50,12 @@ def generate_bounded_regions(
     Args:
         path (str): The path to the region file, e.g. "path/to/file/level_2_region.json"
         level (int, optional): The hierarchical level. Defaults to 1.
-        continent (str, optional): One of SA, NA, EU, AS. If specified, regions are constrained to a specific continent (Not yet available). Defaults to None.
-        z_threshold (float, optional): Determines outlier elimination strictness. The higher this value the shorter the distance required for a node to be considered an outlier. Defaults to 3.
+        continent (str, optional): One of SA, NA, EU, AS. If specified, regions
+        are constrained to a specific continent (Not yet available). Defaults to
+        None.
+        z_threshold (float, optional): Determines outlier elimination
+        strictness. The higher this value the shorter the distance required for
+        a node to be considered an outlier. Defaults to 3.
     """
     assert 0 < level < 5, "Level must be in the interval [1, 5)"
     # TODO add available continent options to docs
@@ -152,12 +156,20 @@ def load_regions(
     nodes: Dict[int, Node], path: str = None, level: int = 1
 ) -> List[Region]:
     """
-    Generates Regions from a region file. If no `path` to a custom region file is provided, the default region file for the hierarchical level specified by `level` is used. If, however, a `path` argument is provided, `level` will be ignored and instead that region file is used to load the regions.
+    Generates Regions from a region file. If no `path` to a custom region file
+    is provided, the default region file for the hierarchical level specified by
+    `level` is used. If, however, a `path` argument is provided, `level` will be
+    ignored and instead that region file is used to load the regions.
 
     Args:
-        nodes (Dict[int, Node]): The nodes contained in the regions to be generated. Typically the result of running load_nodes(). The nodes are mapped to the appropriate regions as the regions are being created.
-        path (str, optional): An optional path to a custom region file (see :func:`~generate_bounded_regions`). If specified, causes `level` to be ignored. Defaults to None.
-        level (int, optional): The hierarchical level for which to generate the regions. Ignored if `path` is not None. Defaults to 1.
+        nodes (Dict[int, Node]): The nodes contained in the regions to be
+        generated. Typically the result of running load_nodes(). The nodes are
+        mapped to the appropriate regions as the regions are being created.
+        path (str, optional): An optional path to a custom region file (see
+        :func:`~generate_bounded_regions`). If specified, causes `level` to be
+        ignored. Defaults to None.
+        level (int, optional): The hierarchical level for which to generate the
+        regions. Ignored if `path` is not None. Defaults to 1.
 
     Returns:
         List[Region]: The regions generated from the region file
@@ -224,10 +236,12 @@ def find_node(name: str, nodes: List[Node]) -> List[Node]:
 
 def get_continent_regions(regions: List[Region], continent: str) -> List[Region]:
     """
-    Given a list of regions, returns those regions with at least one node in the specified continent
+    Given a list of regions, returns those regions with at least one node in the
+    specified continent
 
     Args:
-        regions (List[Region]): List of regions. Typically retrieved by calling :func:`~load_regions()` or 
+        regions (List[Region]): List of regions. Typically retrieved by calling
+        :func:`~load_regions()` or 
         continent (str): One of SA, NA, EU, AS, AF, OC, or AN
 
     Returns:
@@ -256,10 +270,12 @@ def get_continent_regions(regions: List[Region], continent: str) -> List[Region]
 
 def get_nearest_node(point: Tuple[float, float], regions: List[Region]) -> Node:
     """
-    Uses Haversine distance to return the nearest known node to `point` whose coordinates aren't identical to `point`.
+    Uses Haversine distance to return the nearest known node to `point` whose
+    coordinates aren't identical to `point`.
 
     Args:
-        point (Tuple[float, float]): The coordinates of the point whose nearest node is to be found
+        point (Tuple[float, float]): The coordinates of the point whose nearest
+        node is to be found
         regions (List[Region]): The regions where the search is to be performed
 
     Returns:
@@ -280,11 +296,15 @@ def points_to_regions(
     Given a list of points, maps these points to the regions that contain them
 
     Args:
-        regions (List[Region]): The regions to search for the points in. Typically the result of :func:`~load_regions` Can be be combination of regions from multiple hierarchical levels.
+        regions (List[Region]): The regions to search for the points in.
+        Typically the result of :func:`~load_regions` Can be be combination of
+        regions from multiple hierarchical levels.
         points (List[Tuple[float, float]]): The points to whose regions are to be found
 
     Returns:
-        Dict[str, List[Tuple[float, float]]]: A mapping from region IDs to points. A point may be mapped to multiple regions if regions from multiple hierarchical levels were used.
+        Dict[str, List[Tuple[float, float]]]: A mapping from region IDs to
+        points. A point may be mapped to multiple regions if regions from
+        multiple hierarchical levels were used.
     """
     region_geometries = [region.geometry for region in regions]
 
