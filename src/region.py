@@ -19,7 +19,6 @@ class Region:
         geometry: List[Tuple[float, float]],
         nodes: List[Node],
     ):
-        self.name = self.generate_name()
         self.level = level
         self.community_id = community_id
         self.geometry = geometry
@@ -27,6 +26,7 @@ class Region:
         self.nodes = nodes
         for node in nodes:
             node.regions[level] = self
+        self.countries = list(self.get_countries().keys())
 
     def get_countries(self, threshold: int = 1) -> Dict[str, int]:
         """
@@ -116,6 +116,3 @@ class Region:
     def generate_id(self) -> str:
         return f"{self.level}{self.community_id}"
 
-    def generate_name(self):
-        # TODO performs deterministic region name generation
-        pass

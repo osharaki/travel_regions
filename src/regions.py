@@ -166,7 +166,7 @@ def load_regions(
             generated. Typically the result of running load_nodes(). The nodes are
             mapped to the appropriate regions as the regions are being created.
         path (str, optional): An optional path to a custom region file (see
-            :func:`~generate_bounded_regions`). If specified, causes `level` to be
+            :func:`~generate_bounded_regions()`). If specified, causes `level` to be
             ignored. Defaults to None.
         level (int, optional): The hierarchical level for which to generate the
             regions. Ignored if `path` is not None. Defaults to 1.
@@ -229,6 +229,33 @@ def get_node(id: str, nodes: List[Node]) -> Node:
     for node in nodes:
         if node.id == id:
             return node
+
+
+def find_region(countries: List[str], regions: List[Region]) -> List[Region]:
+    """
+    Finds all regions that overlap with the countries in `countries` as
+    defined by :func:`~region.get_countries()`
+
+    Args:
+        countries (List[str]): Countries of interest
+        regions (List[Region]): List of regions to search. Typically the result
+            of :func:`~load_regions()`
+
+    Returns:
+        List[Region]: Regions that overlap with the given countries
+    """
+    candidates = set()
+    for region in regions:
+        hits = 0
+        for country in countries:
+            for region_country in region.countries:
+                matches = find_near_matches(country, region_country, max_l_dist=1)
+                if matches:
+                    hits += 1
+                    break
+        if hits == len(countries):
+            candidates.add(region)
+    return list(candidates)
 
 
 def find_node(name: str, nodes: List[Node]) -> List[Node]:
@@ -314,7 +341,7 @@ def points_to_regions(
 
     Args:
         regions (List[Region]): The regions to search for the points in.
-            Typically the result of :func:`~load_regions` Can be be combination of
+            Typically the result of :func:`~load_regions()` Can be be combination of
             regions from multiple hierarchical levels.
         points (List[Tuple[float, float]]): The points to whose regions are to be found
 
