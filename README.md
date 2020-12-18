@@ -18,8 +18,13 @@ First, [Node](/src/node.py) and [Region](/src/region.py) objects need to be inst
 
 ```python
 from regions import *
+
 nodes = load_nodes()
+
+l1_regions = load_regions(nodes, level=1)
 l2_regions = load_regions(nodes, level=2)
+l3_regions = load_regions(nodes, level=3)
+l4_regions = load_regions(nodes, level=4)
 ```
 
 Now, one of the following, currently supported operations can be executed.
@@ -41,6 +46,15 @@ neighboring_regions =  l2_regions[1].get_neighbors(l2_regions)
 
 # Filter regions by continent
 regions_south_america = get_continent_regions(l2_regions, "SA")
+
+# Find node by name
+matching_nodes = find_node("Springfield", list(nodes.values()))
+
+# Get region by ID
+region = get_region("22", l1_regions + l2_regions + l3_regions + l4_regions)
+
+# Find region by countries spanned
+matching_regions = find_region(["Paraguay", "Brazil"], l2_regions)
 ```
 
 ## Region files
