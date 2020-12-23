@@ -4,12 +4,14 @@ from scipy import stats
 import operator
 from functools import reduce
 from math import sqrt
+import numpy as np
 
 
 def detect_outliers_z_score(data, threshold=3) -> List[Tuple[int, float]]:
     centroid = find_centroid(data)
     distances_from_center = [haversine(point, centroid) for point in data]
-    z_scores: float = stats.zscore(distances_from_center)
+    with np.errstate(invalid="ignore", divide="ignore"):
+        z_scores: float = stats.zscore(distances_from_center)
     outliers: List[Tuple[int, float]] = list(
         filter(lambda x: abs(x[1]) > threshold, enumerate(z_scores))
     )
