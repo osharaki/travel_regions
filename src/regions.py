@@ -20,181 +20,176 @@ from haversine import haversine
 from pycountry_convert import *
 
 
-def load_nodes() -> Dict[int, Node]:
-    """
-    Parses the communities data file creates an Node instance for each location.
+class TravelRegions:
+    def __init__(self, region_model: str = None, levels: int = None):
+        """
+        A representation of a region model
 
-    Returns:
-        Dict[int, Node]: The generated Node instances
-    """
-    data = read_csv(
-        "data/communities_-1__with_distance_multi-level_geonames_cities_7.csv"
-    )
-    nodes = {}
-    for i, row in enumerate(data):
-        if i == 0:
-            continue  # skip first row (headers)
-        nodes[row[0]] = Node(
-            row[0], row[-1], (float(row[-3]), float(row[-2])), row[-4],
-        )
-    return nodes
+        Args:
+            region_model (str, optional): Path to a custom region model if one
+            should be used instead of the default. See
+            TODO for a reference of the expected file structure. Defaults to None.
+            levels (int, optional): The number of hierarchical levels in the
+            region model. Defaults to None.
+        """
+        self.nodes = {}
+        self.regions = {}
+        self.regions_serialized = {}
 
-
-def generate_bounded_regions(
-    path: str, level: int = 1, continent: str = None, z_threshold: float = 3,
-):
-    # FIXME remove continent parameter
-    """
-    Generates a region file for the specified hierarchical level.
-
-    Args:
-        path (str): The path to the region file, e.g. ``path/to/file/level_2_region.json``
-        level (int, optional): The hierarchical level. Defaults to 1.
-        continent (str, optional): One of **SA, NA, EU, AS**. If specified, regions
-            are constrained to a specific continent (Not yet available). Defaults to
-            None.
-        z_threshold (float, optional): Determines outlier elimination
-            strictness. The higher this value the shorter the distance required for
-            a node to be considered an outlier. Defaults to 3.
-    """
-    assert 0 < level < 5, "Level must be in the interval [1, 5)"
-    # TODO add available continent options to docs
-
-    # TODO Add continent cutouts
-    #######################
-    # Extract communities #
-    #######################
-    continents = {"SA": 0, "NA": 1, "EU": 2, "AS": 3}
-    data = read_csv(
-        "data/communities_-1__with_distance_multi-level_geonames_cities_7.csv"
-    )
-    communities = get_communities(data, 1)
-    if continent:
-        communities = get_communities(data, 1)  # Extract l1 communities
-        communities = communities[continents[continent]]  # Filter by continent
-        communities = get_communities(
-            communities, level
-        )  # Extract communities in continent at specified hierarichal level
-    else:
-        communities = get_communities(
-            communities[0] + communities[1] + communities[2] + communities[3], level
-        )  # Level 1 communities 4 and above are very sparsely populated and thus excluded
-    community_IDs = list(communities.keys())
-    #####################
-    # Outlier detection #
-    #####################
-    nonoutliers_by_community = []
-    outliers = []
-    for community in list(communities.values()):
-        community_nodes = [point for point in community]
-        outliersZScore = detect_outliers_z_score(
-            [(float(node[-3]), float(node[-2])) for node in community_nodes],
-            threshold=z_threshold,
-        )
-        if len(outliersZScore) > 1:
-            outlier_indices, _ = zip(*outliersZScore)
-        elif len(outliersZScore) > 0:
-            outlier_indices = [outliersZScore[0][0]]
-        else:
-            outlier_indices = []
-        nonoutliers_by_community += [
-            [
-                node[1]
-                for node in enumerate(community_nodes)
-                if node[0] not in outlier_indices
-            ]
-        ]
-        outliers.append([community_nodes[index] for index in outlier_indices])
-
-    #####################
-    # Generate polygons #
-    #####################
-    # TODO Create cutouts and load if continent is not None
-    bounding_area = read_geo_json(
-        None if continent else os.path.join("data", "cutouts", "world.geojson",)
-    )
-    bounding_area = list(
-        map(
-            lambda point: [point[1], point[0]],
-            bounding_area["geometry"]["coordinates"][0],
-        )
-    )  # flipping coordinates for geovoronoi and Leaflet compatibility
-    bounding_area_shape = Polygon(bounding_area)
-    nonoutliers = [
-        community_nonoutlier
-        for community_nonoutliers in nonoutliers_by_community
-        for community_nonoutlier in community_nonoutliers
-    ]
-    nonoutliers_latlng = [
-        (float(nonoutlier[-3]), float(nonoutlier[-2])) for nonoutlier in nonoutliers
-    ]
-    voronoiClusters = generate_constrained_voronoi_diagram(
-        nonoutliers_latlng, bounding_area_shape, nonoutliers_by_community
-    )
-    merged_voronoi_clusters = merge_regions(
-        *voronoiClusters
-    )  # For each cluster, unifies the cluster's single-point voronoi regions into a single polygon
-
-    ######################
-    # Export communities #
-    ######################
-    region_geometries = extract_geometries(*merged_voronoi_clusters)
-    cluster_to_json(
-        {
-            "level": level,
-            "community_IDs": community_IDs,
-            "bounding_area": bounding_area,
-            "geometries": region_geometries,
-            "nodes": nonoutliers_by_community,
-            "outliers": outliers,
-        },
-        path,
-    )
-
-
-def load_regions(
-    nodes: Dict[int, Node], path: str = None, level: int = 1
-) -> List[Region]:
-    """
-    Generates Regions from a region file. If no `path` to a custom region file
-    is provided, the default region file for the hierarchical level specified by
-    `level` is used. If, however, a `path` argument is provided, `level` will be
-    ignored and instead that region file is used to load the regions.
-
-    Args:
-        nodes (Dict[int, Node]): The nodes contained in the regions to be
-            generated. Typically the result of running load_nodes(). The nodes are
-            mapped to the appropriate regions as the regions are being created.
-        path (str, optional): An optional path to a custom region file (see
-            :func:`~generate_bounded_regions()`). If specified, causes `level` to be
-            ignored. Defaults to None.
-        level (int, optional): The hierarchical level for which to generate the
-            regions. Ignored if `path` is not None. Defaults to 1.
-
-    Returns:
-        List[Region]: The regions generated from the region file
-    """
-    if not path:
-        path = os.path.join(
-            Path(".").parent, "data", "region_files", f"level_{level}_regions.json"
-        )
-    regions = []
-    with open(path, "r") as f:
-        regions_serialized = json.load(f)
-        hierarchical_level = regions_serialized["level"]
-        community_IDs = regions_serialized["community_IDs"]
-        geometries = regions_serialized["geometries"]
-        region_nodes_serialized = regions_serialized["nodes"]
-        for i in range(len(geometries)):
-            region_nodes = []
-            for region_node_serialized in region_nodes_serialized[i]:
-                region_nodes.append(nodes[region_node_serialized[0]])
-            regions.append(
-                Region(
-                    hierarchical_level, community_IDs[i], geometries[i], region_nodes
-                )
+        #######################
+        # Extract communities #
+        #######################
+        if region_model:
+            assert (
+                levels is not None
+            ), "The number of hierarchical levels in the region model must be provided"
+            print(
+                "Initializing with data from provided region model. This operation may take some time..."
             )
-        return regions
+            data = read_csv(region_model)
+            # Generate communities for hierarchical levels 1-4
+            communities_by_level = {
+                i: get_communities(data, i) for i in range(1, levels)
+            }
+            self.regions_serialized = {}
+            for level, communities in communities_by_level.items():
+                community_IDs = list(communities.keys())
+
+                #####################
+                # Outlier detection #
+                #####################
+                nonoutliers_by_community = []
+                outliers = []
+                for community in communities.values():
+                    community_nodes = [point for point in community]
+                    outliers_z_score = detect_outliers_z_score(
+                        [
+                            (float(node[-3]), float(node[-2]))
+                            for node in community_nodes
+                        ],
+                        threshold=3,
+                    )
+                    if len(outliers_z_score) > 1:
+                        outlier_indices, _ = zip(*outliers_z_score)
+                    elif len(outliers_z_score) > 0:
+                        outlier_indices = [outliers_z_score[0][0]]
+                    else:
+                        outlier_indices = []
+                    nonoutliers_by_community += [
+                        [
+                            node[1]
+                            for node in enumerate(community_nodes)
+                            if node[0] not in outlier_indices
+                        ]
+                    ]
+                    outliers.append(
+                        [community_nodes[index] for index in outlier_indices]
+                    )
+
+                #####################
+                # Generate polygons #
+                #####################
+                bounding_area = read_geo_json(
+                    os.path.join("data", "cutouts", "world.geojson",)
+                )
+                bounding_area = list(
+                    map(
+                        lambda point: [point[1], point[0]],
+                        bounding_area["geometry"]["coordinates"][0],
+                    )
+                )  # flipping coordinates for geovoronoi and Leaflet compatibility
+                bounding_area_shape = Polygon(bounding_area)
+                nonoutliers = [
+                    community_nonoutlier
+                    for community_nonoutliers in nonoutliers_by_community
+                    for community_nonoutlier in community_nonoutliers
+                ]
+                nonoutliers_latlng = [
+                    (float(nonoutlier[-3]), float(nonoutlier[-2]))
+                    for nonoutlier in nonoutliers
+                ]
+                voronoi_clusters = generate_constrained_voronoi_diagram(
+                    nonoutliers_latlng, bounding_area_shape, nonoutliers_by_community
+                )
+                merged_voronoi_clusters = merge_regions(
+                    *voronoi_clusters
+                )  # For each cluster, unifies the cluster's single-point voronoi regions into a single polygon
+                region_geometries = extract_geometries(*merged_voronoi_clusters)
+
+                # Generate region file JSON dump
+                self.regions_serialized[level] = {
+                    "level": level,
+                    "community_IDs": community_IDs,
+                    "bounding_area": bounding_area,
+                    "geometries": region_geometries,
+                    "nodes": nonoutliers_by_community,
+                    "outliers": outliers,
+                }
+        else:
+            for level in range(1, 5):
+                path = os.path.join(
+                    Path(".").parent,
+                    "data",
+                    "region_files",
+                    f"level_{level}_regions.json",
+                )
+                with open(path, "r") as f:
+                    self.regions_serialized[level] = json.load(f)
+
+        ################################
+        # Load nodes from region model #
+        ################################
+        data = read_csv(
+            region_model
+            if region_model
+            else "data/communities_-1__with_distance_multi-level_geonames_cities_7.csv"
+        )
+        self.nodes = {}
+        for i, row in enumerate(data):
+            if i == 0:
+                continue  # skip first row (headers)
+            self.nodes[row[0]] = Node(
+                row[0], row[-1], (float(row[-3]), float(row[-2])), row[-4],
+            )
+
+        #######################
+        # Instantiate regions #
+        #######################
+        for level, regions_dump in self.regions_serialized.items():
+            regions = []
+            hierarchical_level = regions_dump["level"]
+            community_IDs = regions_dump["community_IDs"]
+            geometries = regions_dump["geometries"]
+            region_nodes_serialized = regions_dump["nodes"]
+            for i in range(len(geometries)):
+                region_nodes = []
+                for region_node_serialized in region_nodes_serialized[i]:
+                    region_nodes.append(self.nodes[region_node_serialized[0]])
+                regions.append(
+                    Region(
+                        hierarchical_level,
+                        community_IDs[i],
+                        geometries[i],
+                        region_nodes,
+                    )
+                )
+            self.regions[level] = regions
+        if region_model:
+            print("Initialization complete!")
+
+    def export_regions(self, level: int, path: str):
+        """
+        Generates a region file for the specified hierarchical level
+
+        Args:
+            level (int): Hierarchical level for which the region file is to be generated
+            path (str): Target location in the file system where the region file is to
+            be saved (must include filename). For example, ``path/to/file/my_l2_regions.json``
+        """
+        with open(path, "w") as f:
+            json.dump(self.json_dump[level], f, indent=4)
+
+    # TODO Port remaining functions to TravelRegions
 
 
 def get_region(id: str, regions: List[Region]) -> Region:
