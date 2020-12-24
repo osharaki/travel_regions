@@ -15,7 +15,7 @@ from polygons import (
     merge_regions,
 )
 from region import Region
-from utils.file_utils import cluster_to_json, get_communities, read_csv, read_geo_json
+from utils.file_utils import get_communities, read_csv, read_geo_json
 from haversine import haversine
 from pycountry_convert import *
 
@@ -23,14 +23,14 @@ from pycountry_convert import *
 class TravelRegions:
     def __init__(self, region_model: str = None, levels: int = None):
         """
-        A representation of a region model
+        A class representation of a region model
 
         Args:
-            region_model (str, optional): Path to a custom region model if one
-            should be used instead of the default. See
-            TODO for a reference of the expected file structure. Defaults to None.
+            TODO region_model (str, optional): Path to a custom region model if one
+                should be used instead of the default. See ____ for a reference of
+                the expected file structure. Defaults to None.
             levels (int, optional): The number of hierarchical levels in the
-            region model. Defaults to None.
+                region model. Defaults to None.
         """
         self.nodes = {}
         self.regions = {}
@@ -183,177 +183,167 @@ class TravelRegions:
 
         Args:
             level (int): Hierarchical level for which the region file is to be generated
-            path (str): Target location in the file system where the region file is to
-            be saved (must include filename). For example, ``path/to/file/my_l2_regions.json``
+            path (str): Target location in the file system where the region file
+                is to be saved (must include filename). For example,
+                ``path/to/file/my_l2_regions.json``
         """
         with open(path, "w") as f:
             json.dump(self.json_dump[level], f, indent=4)
 
-    # TODO Port remaining functions to TravelRegions
+    def get_region(self, id: str) -> Region:
+        """
+        Returns the region with the given ``id``
 
+        Args:
+            id (str): Region ID
 
-def get_region(id: str, regions: List[Region]) -> Region:
-    """
-    Returns the region with the given `id` from the provided list
+        Returns:
+            Region: Region with matching ID
+        """
+        for region in self.regions:
+            if region.id == id:
+                return region
 
-    Args:
-        id (str): Region ID
-        regions (List[Region]): List of regions to be searched. Typically the result
-            of :func:`~load_regions()`.
+    def get_node(self, id: str) -> Node:
+        """
+        Returns the node with the given ``id``
 
-    Returns:
-        Region: Region with matching ID
-    """
-    for region in regions:
-        if region.id == id:
-            return region
+        Args:
+            id (str): Node ID
 
+        Returns:
+            Node: Node with matching ID
+        """
+        for node in self.nodes:
+            if node.id == id:
+                return node
 
-def get_node(id: str, nodes: List[Node]) -> Node:
-    """
-    Returns the node with the given `id` from the provided list
+    def find_region(self, countries: List[str]) -> List[Region]:
+        """
+        Finds all regions that overlap with the countries provided, where
+        overlap is defined as the country having at least one node contained
+        within the region. See :func:`~region.get_countries()` for more.
 
-    Args:
-        id (str): Node ID
-        nodes (List[Node]): List of nodes to be searched. Typically the result
-            of :func:`~load_nodes()`. 
+        Args:
+            countries (List[str]): Countries of interest
 
-    Returns:
-        Node: Node with matching ID
-    """
-    for node in nodes:
-        if node.id == id:
-            return node
+        Returns:
+            List[Region]: Regions that overlap with the given countries
+        """
+        # TODO Make search able to work with a wider range of terms: cities,
+        # landmarks, etc.
+        candidates = set()
+        for region in self.regions:
+            hits = 0
+            for country in countries:
+                for region_country in region.countries:
+                    matches = find_near_matches(country, region_country, max_l_dist=1)
+                    if matches:
+                        hits += 1
+                        break
+            if hits == len(countries):
+                candidates.add(region)
+        return list(candidates)
 
+    def find_node(self, name: str) -> List[Node]:
+        """
+        Searches for a node by name and returns all approximate matches
 
-def find_region(countries: List[str], regions: List[Region]) -> List[Region]:
-    """
-    Finds all regions that overlap with the countries in `countries` as
-    defined by :func:`~region.get_countries()`
+        Args:
+            name (str): Location name
 
-    Args:
-        countries (List[str]): Countries of interest
-        regions (List[Region]): List of regions to search. Typically the result
-            of :func:`~load_regions()`
+        Returns:
+            List[Node]: All nodes whose names fulfill the matching criterea
+        """
+        hits = []
+        for node in self.nodes:
+            matches = find_near_matches(name, node.name, max_l_dist=1)
+            if matches:
+                hits.append(node)
+        return hits
 
-    Returns:
-        List[Region]: Regions that overlap with the given countries
-    """
-    candidates = set()
-    for region in regions:
-        hits = 0
-        for country in countries:
-            for region_country in region.countries:
-                matches = find_near_matches(country, region_country, max_l_dist=1)
-                if matches:
-                    hits += 1
-                    break
-        if hits == len(countries):
-            candidates.add(region)
-    return list(candidates)
+    def get_continent_regions(self, continent: str) -> List[Region]:
+        """
+        Returns regions with at least one node in the specified continent
 
+        Args:
+            continent (str): One of SA, NA, EU, AS, AF, OC, or AN
 
-def find_node(name: str, nodes: List[Node]) -> List[Node]:
-    """
-    Searches for a node by name and returns all approximate matches
-
-    Args:
-        name (str): The search term
-        nodes (List[Node]): A list of nodes to be searched for matches. Typically the result
-            of :func:`~load_nodes()`.
-
-    Returns:
-        List[Node]: All nodes whose names fulfill the matching criterea
-    """
-    hits = []
-    for node in nodes:
-        matches = find_near_matches(name, node.name, max_l_dist=1)
-        if matches:
-            hits.append(node)
-    return hits
-
-
-def get_continent_regions(regions: List[Region], continent: str) -> List[Region]:
-    """
-    Given a list of regions, returns those regions with at least one node in the
-    specified continent
-
-    Args:
-        regions (List[Region]): List of regions. Typically retrieved by calling
-            :func:`~load_regions()` or continent (str): One of SA, NA, EU, AS, AF,
-            OC, or AN
-
-    Returns:
-        List[Region]: Regions with at least one node in the given continent
-    """
-    continent_regions = set()
-    for region in regions:
-        for country in region.get_countries().keys():
-            country = country_name_to_country_alpha2(country, cn_name_format="default")
-            try:
-                country_continent = country_alpha2_to_continent_code(country)
-                # FIXME Remove nested try/except and add a continue here
-                # Nested try/except was only added for development to see which country codes need to be handled
-            except KeyError:
+        Returns:
+            List[Region]: Regions with at least one node in the given continent
+        """
+        continent_regions = set()
+        for region in self.regions:
+            for country in region.get_countries().keys():
+                country = country_name_to_country_alpha2(
+                    country, cn_name_format="default"
+                )
                 try:
-                    country_continent = {"EH": "AF", "VA": "EU", "PN": "OC"}[country]
-                except KeyError as key:
-                    print(
-                        f"Country code {key} found neither in pycountry_convert nor in custom dict!"
-                    )
-                    continue
-            if country_continent == continent:
-                continent_regions.add(region)
-    return list(continent_regions)
+                    country_continent = country_alpha2_to_continent_code(country)
+                    # FIXME Remove nested try/except and add a continue here
+                    # Nested try/except was only added for development to see which country codes need to be handled
+                except KeyError:
+                    try:
+                        country_continent = {"EH": "AF", "VA": "EU", "PN": "OC"}[
+                            country
+                        ]
+                    except KeyError as key:
+                        print(
+                            f"Country code {key} found neither in pycountry_convert nor in custom dict!"
+                        )
+                        continue
+                if country_continent == continent:
+                    continent_regions.add(region)
+        return list(continent_regions)
 
+    def get_nearest_node(self, point: Tuple[float, float]) -> Node:
+        """
+        Uses Haversine distance to return the nearest known node to ``point``
+        whose coordinates aren't identical to it.
 
-def get_nearest_node(point: Tuple[float, float], regions: List[Region]) -> Node:
-    """
-    Uses Haversine distance to return the nearest known node to `point` whose
-    coordinates aren't identical to `point`.
+        Args:
+            point (Tuple[float, float]): The coordinates of the point whose
+                nearest node is to be found
 
-    Args:
-        point (Tuple[float, float]): The coordinates of the point whose nearest
-        node is to be found
-        regions (List[Region]): The regions where the search is to be performed
+        Returns:
+            Node: The closest, non-identical node to point
+        """
+        nodes = [
+            node
+            for region in self.regions
+            for node in region.nodes
+            if node.latlng != point
+        ]  # extract all nodes
+        distances = [haversine(point, node.latlng) for node in nodes]
+        nearest_node = nodes[distances.index(min(distances))]
+        return nearest_node
 
-    Returns:
-        Node: The closest, non-identical node to point
-    """
-    nodes = [
-        node for region in regions for node in region.nodes if node.latlng != point
-    ]  # extract all nodes
-    distances = [haversine(point, node.latlng) for node in nodes]
-    nearest_node = nodes[distances.index(min(distances))]
-    return nearest_node
+    def points_to_regions(
+        self, points: List[Tuple[float, float]]
+    ) -> Dict[str, List[Tuple[float, float]]]:
+        """
+        Maps ``points`` to the regions that contain them
 
+        Args:
+            points (List[Tuple[float, float]]): The points of interest
 
-def points_to_regions(
-    regions: List[Region], points: List[Tuple[float, float]],
-) -> Dict[str, List[Tuple[float, float]]]:
-    """
-    Given a list of points, maps these points to the regions that contain them
+        Returns:
+            Dict[str, List[Tuple[float, float]]]: A mapping from region IDs to
+                points. A point may be mapped to multiple regions if regions from
+                multiple hierarchical levels were used.
+        """
+        region_geometries = [region.geometry for region in self.regions]
 
-    Args:
-        regions (List[Region]): The regions to search for the points in.
-            Typically the result of :func:`~load_regions()` Can be be combination of
-            regions from multiple hierarchical levels.
-        points (List[Tuple[float, float]]): The points to whose regions are to be found
+        region_geometries = [
+            Polygon(region_geometry["geometry"])
+            if region_geometry["type"] == "polygon"
+            else MultiPolygon(
+                [Polygon(geometry) for geometry in region_geometry["geometry"]]
+            )
+            for region_geometry in region_geometries
+        ]  # convert region geometries to Shapely polygons
+        classsifications = classify_points(points, region_geometries)
+        return {
+            self.regions[index].id: points for index, points in classsifications.items()
+        }
 
-    Returns:
-        Dict[str, List[Tuple[float, float]]]: A mapping from region IDs to
-        points. A point may be mapped to multiple regions if regions from
-        multiple hierarchical levels were used.
-    """
-    region_geometries = [region.geometry for region in regions]
-
-    region_geometries = [
-        Polygon(region_geometry["geometry"])
-        if region_geometry["type"] == "polygon"
-        else MultiPolygon(
-            [Polygon(geometry) for geometry in region_geometry["geometry"]]
-        )
-        for region_geometry in region_geometries
-    ]  # convert region geometries to Shapely polygons
-    classsifications = classify_points(points, region_geometries)
-    return {regions[index].id: points for index, points in classsifications.items()}

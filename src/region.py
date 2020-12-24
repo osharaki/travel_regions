@@ -1,8 +1,6 @@
 from typing import *
 
-from shapely import geometry
 from shapely.geometry import Polygon
-from shapely.geometry.multipolygon import MultiPolygon
 
 from collections import Counter
 
