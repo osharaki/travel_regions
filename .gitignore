@@ -1,7 +1,7 @@
 .vscode
 output/*
 data/geopandas_exports
-src/main.py
+travel_regions/main.py
 
 !output/.gitkeep
 
