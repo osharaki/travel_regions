@@ -1,10 +1,14 @@
 # http://blog.thehumangeo.com/2014/05/12/drawing-boundaries-in-python/
 from typing import Dict, List, Tuple, Union
+from haversine import haversine
+from scipy import stats
+from functools import reduce
+from math import sqrt
+import operator
 import shapely.geometry as geometry
 import matplotlib.pyplot as pl
 import alphashape
 import time
-import os
 import numpy as np
 
 from typing import Dict, List, Tuple
@@ -141,3 +145,48 @@ def classify_points(
             if p.within(community):
                 classifications[i].append(points_to_coords([p])[0])
     return classifications
+
+
+def detect_outliers_z_score(data, threshold=3) -> List[Tuple[int, float]]:
+    centroid = find_centroid(data)
+    distances_from_center = [haversine(point, centroid) for point in data]
+    with np.errstate(invalid="ignore", divide="ignore"):
+        z_scores: float = stats.zscore(distances_from_center)
+    outliers: List[Tuple[int, float]] = list(
+        filter(lambda x: abs(x[1]) > threshold, enumerate(z_scores))
+    )
+    return outliers
+
+
+def find_centroid(data):
+    x, y = zip(*data)
+    size = len(x)
+    x_center = sum(x) / size
+    y_center = sum(y) / size
+    return (x_center, y_center)
+
+
+def find_distance(a, b):
+    """
+    Finds Eucledian distance between two points.
+
+    Args:
+        a (List[float]): Coordinates of point a.
+        b (List[float]): Coordinates of point b.
+
+    Returns:
+        float: Distance between a and b.
+    """
+    dimensions = zip(a, b)
+    dimensions_subtracted = map(
+        lambda dimension: reduce(operator.sub, dimension), dimensions
+    )
+    distance = sqrt(
+        sum(
+            [
+                dimension_subtracted ** 2
+                for dimension_subtracted in dimensions_subtracted
+            ]
+        )
+    )
+    return distance

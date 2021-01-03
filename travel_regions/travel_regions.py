@@ -5,19 +5,18 @@ from typing import Dict, List, Tuple
 from shapely.geometry.multipolygon import MultiPolygon
 from shapely.geometry.polygon import Polygon
 from fuzzysearch import find_near_matches
+from haversine import haversine
+from pycountry_convert import *
 
-from node import Node
-from outliers import detect_outliers_z_score
-from polygons import (
+from ._map_features import Node, Region
+from ._geometry import (
     classify_points,
     extract_geometries,
     generate_constrained_voronoi_diagram,
     merge_regions,
+    detect_outliers_z_score,
 )
-from region import Region
-from utils.file_utils import get_communities, read_csv, read_geo_json
-from haversine import haversine
-from pycountry_convert import *
+from ._file_utils import get_communities, read_csv, read_geo_json
 
 
 class TravelRegions:
