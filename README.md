@@ -1,21 +1,13 @@
-## Environment setup
-
-Before the code can be run, all module dependencies must be installed.
+## Installing for development
 
 1. Clone this repository
 2. Navigate to its root directory
-3. In your terminal, run `conda env create` _(it is assumed [Conda](https://docs.conda.io/projects/conda/en/latest/user-guide/install/) is already installed)_
-
-   This will use [`environment.yml`](/environment.yml) to create a Conda environment called `giscience` with all the required dependencies in your default Conda environment path.
-
-   _Should an environment with that name already exist, you can give the new environment a different name by changing the `name` field's value in `environment.yml` to something else._
-
-4. Be sure to activate the environment before running the code
+3. Run `pip install -e .`
 
 ## Usage
 
 ```python
-from regions import TravelRegions
+from travel_regions import TravelRegions
 
 travel_regions = TravelRegions()
 ```
