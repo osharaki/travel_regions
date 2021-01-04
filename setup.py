@@ -38,6 +38,6 @@ setup(
     test_suite="tests",
     tests_require=test_requirements,
     url="https://github.com/osharaki/travel_regions",
-    version="0.3",
+    version="0.4",
     zip_safe=False,
 )
