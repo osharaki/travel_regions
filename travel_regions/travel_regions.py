@@ -7,6 +7,7 @@ from shapely.geometry.polygon import Polygon
 from fuzzysearch import find_near_matches
 from haversine import haversine
 from pycountry_convert import *
+import os
 
 from ._map_features import Node, Region
 from ._geometry import (
@@ -17,6 +18,8 @@ from ._geometry import (
     detect_outliers_z_score,
 )
 from ._file_utils import get_communities, read_csv, read_geo_json
+
+package_directory = os.path.dirname(os.path.abspath(__file__))
 
 
 class TravelRegions:
@@ -127,7 +130,7 @@ class TravelRegions:
         else:
             for level in range(1, 5):
                 path = os.path.join(
-                    Path(".").parent,
+                    Path(package_directory).parent,
                     "data",
                     "region_files",
                     f"level_{level}_regions.json",
@@ -138,10 +141,15 @@ class TravelRegions:
         ################################
         # Load nodes from region model #
         ################################
+
         data = read_csv(
             region_model
             if region_model
-            else "data/communities_-1__with_distance_multi-level_geonames_cities_7.csv"
+            else os.path.join(
+                Path(package_directory).parent,
+                "data",
+                "communities_-1__with_distance_multi-level_geonames_cities_7.csv",
+            )
         )
         self.nodes = {}
         for i, row in enumerate(data):
@@ -199,9 +207,12 @@ class TravelRegions:
         Returns:
             Region: Region with matching ID
         """
-        for region in self.regions:
-            if region.id == id:
-                return region
+        for level_regions in self.regions.values():
+            for region in level_regions:
+                if region.id == id:
+                    return region
+        print(f"No region with id {id}")
+        return None
 
     def get_node(self, id: str) -> Node:
         """
@@ -213,9 +224,12 @@ class TravelRegions:
         Returns:
             Node: Node with matching ID
         """
-        for node in self.nodes:
-            if node.id == id:
-                return node
+        try:
+            node = self.nodes[id]
+            return node
+        except KeyError as key:
+            print(f"No node with id {key}")
+            return None
 
     def find_region(self, countries: List[str]) -> List[Region]:
         """
@@ -232,16 +246,19 @@ class TravelRegions:
         # TODO Make search able to work with a wider range of terms: cities,
         # landmarks, etc.
         candidates = set()
-        for region in self.regions:
-            hits = 0
-            for country in countries:
-                for region_country in region.countries:
-                    matches = find_near_matches(country, region_country, max_l_dist=1)
-                    if matches:
-                        hits += 1
-                        break
-            if hits == len(countries):
-                candidates.add(region)
+        for level_regions in self.regions.values():
+            for region in level_regions:
+                hits = 0
+                for country in countries:
+                    for region_country in region.countries:
+                        matches = find_near_matches(
+                            country, region_country, max_l_dist=1
+                        )
+                        if matches:
+                            hits += 1
+                            break
+                if hits == len(countries):
+                    candidates.add(region)
         return list(candidates)
 
     def find_node(self, name: str) -> List[Node]:
@@ -255,7 +272,7 @@ class TravelRegions:
             List[Node]: All nodes whose names fulfill the matching criterea
         """
         hits = []
-        for node in self.nodes:
+        for node in self.nodes.values():
             matches = find_near_matches(name, node.name, max_l_dist=1)
             if matches:
                 hits.append(node)
@@ -272,27 +289,28 @@ class TravelRegions:
             List[Region]: Regions with at least one node in the given continent
         """
         continent_regions = set()
-        for region in self.regions:
-            for country in region.get_countries().keys():
-                country = country_name_to_country_alpha2(
-                    country, cn_name_format="default"
-                )
-                try:
-                    country_continent = country_alpha2_to_continent_code(country)
-                    # FIXME Remove nested try/except and add a continue here
-                    # Nested try/except was only added for development to see which country codes need to be handled
-                except KeyError:
+        for level_regions in self.regions.values():
+            for region in level_regions:
+                for country in region.countries:
+                    country = country_name_to_country_alpha2(
+                        country, cn_name_format="default"
+                    )
                     try:
-                        country_continent = {"EH": "AF", "VA": "EU", "PN": "OC"}[
-                            country
-                        ]
-                    except KeyError as key:
-                        print(
-                            f"Country code {key} found neither in pycountry_convert nor in custom dict!"
-                        )
-                        continue
-                if country_continent == continent:
-                    continent_regions.add(region)
+                        country_continent = country_alpha2_to_continent_code(country)
+                        # FIXME Remove nested try/except and add a continue here
+                        # Nested try/except was only added for development to see which country codes need to be handled
+                    except KeyError:
+                        try:
+                            country_continent = {"EH": "AF", "VA": "EU", "PN": "OC"}[
+                                country
+                            ]
+                        except KeyError as key:
+                            print(
+                                f"Country code {key} found neither in pycountry_convert nor in custom dict!"
+                            )
+                            continue
+                    if country_continent == continent:
+                        continent_regions.add(region)
         return list(continent_regions)
 
     def get_nearest_node(self, point: Tuple[float, float]) -> Node:
@@ -308,10 +326,7 @@ class TravelRegions:
             Node: The closest, non-identical node to point
         """
         nodes = [
-            node
-            for region in self.regions
-            for node in region.nodes
-            if node.latlng != point
+            node for node in self.nodes.values() if node.latlng != point
         ]  # extract all nodes
         distances = [haversine(point, node.latlng) for node in nodes]
         nearest_node = nodes[distances.index(min(distances))]
@@ -331,18 +346,18 @@ class TravelRegions:
                 points. A point may be mapped to multiple regions if regions from
                 multiple hierarchical levels were used.
         """
-        region_geometries = [region.geometry for region in self.regions]
+        regions = []
+        for level_regions in self.regions.values():
+            regions += [region for region in level_regions]
 
         region_geometries = [
-            Polygon(region_geometry["geometry"])
-            if region_geometry["type"] == "polygon"
+            Polygon(region.geometry["geometry"])
+            if region.geometry["type"] == "polygon"
             else MultiPolygon(
-                [Polygon(geometry) for geometry in region_geometry["geometry"]]
+                [Polygon(geometry) for geometry in region.geometry["geometry"]]
             )
-            for region_geometry in region_geometries
+            for region in regions
         ]  # convert region geometries to Shapely polygons
-        classsifications = classify_points(points, region_geometries)
-        return {
-            self.regions[index].id: points for index, points in classsifications.items()
-        }
+        classifications = classify_points(points, region_geometries)
+        return {regions[index].id: points for index, points in classifications.items()}
 
