@@ -74,6 +74,7 @@ class Region:
         Returns:
             Set[Region]: All regions whose geometries share at least one point with the calling region
         """
+        regions = list(regions)
         regions.remove(self)
         neighboring_regions = set()
         if self.geometry["type"] == "polygon":
