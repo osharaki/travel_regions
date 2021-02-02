@@ -77,6 +77,9 @@ class TravelRegions:
                         outlier_indices = [outliers_z_score[0][0]]
                     else:
                         outlier_indices = []
+                    # XXX Save each node as object not list. With coords in
+                    # field {"latlng": [<lat>, <lng>]}
+                    # XXX Do something about the empty lists (i.e. nodes) in the output!
                     nonoutliers_by_community += [
                         [
                             node[1]
@@ -184,7 +187,7 @@ class TravelRegions:
         if region_model:
             print("Initialization complete!")
 
-    def export_regions(self, level: int, path: str):
+    def export_regions(self, level: int, path: str, regions_ids: List[int] = []):
         """
         Generates a region file for the specified hierarchical level
 
@@ -195,7 +198,25 @@ class TravelRegions:
                 ``path/to/file/my_l2_regions.json``
         """
         with open(path, "w") as f:
-            json.dump(self.json_dump[level], f, indent=4)
+            if regions_ids:
+                regions_serialized = {
+                    "level": level,
+                    "community_IDs": [],
+                    "bounding_area": [],
+                    "geometries": [],
+                    "nodes": [],
+                    "outliers": [],
+                }
+                for region_id in regions_ids:
+                    region = self.get_region(str(region_id))
+                    regions_serialized["geometries"].append(region.geometry)
+                    regions_serialized["community_IDs"].append(region.community_id)
+                    regions_serialized["nodes"].append(
+                        [{"latlng": node.latlng} for node in region.nodes]
+                    )
+                json.dump(regions_serialized, f, indent=4)
+            else:
+                json.dump(self.regions_serialized[level], f, indent=4)
 
     def get_region(self, id: str) -> Region:
         """
@@ -213,6 +234,23 @@ class TravelRegions:
                     return region
         print(f"No region with id {id}")
         return None
+
+    def get_country_regions(
+        self, country: str, level: int, include_multipolygons: bool = True
+    ) -> List[str]:
+        matching_regions = [
+            node.regions[level].id
+            for node in self.nodes.values()
+            if node.country == str.upper(country)
+            and level in node.regions
+            and (
+                include_multipolygons
+                or node.regions[level].geometry["type"] == "polygon"
+            )
+        ]
+        if matching_regions:
+            return matching_regions
+        print("No matching country regions found!")
 
     def get_node(self, id: str) -> Node:
         """
