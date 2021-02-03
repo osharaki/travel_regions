@@ -23,7 +23,12 @@ package_directory = os.path.dirname(os.path.abspath(__file__))
 
 
 class TravelRegions:
-    def __init__(self, region_model: str = None, levels: int = None):
+    def __init__(
+        self,
+        region_model: str = None,
+        levels: int = None,
+        bounding_area_path: str = os.path.join("data", "cutouts", "world.geojson",),
+    ):
         """
         A class representation of a region model
 
@@ -41,17 +46,28 @@ class TravelRegions:
         #######################
         # Extract communities #
         #######################
-        if region_model:
-            assert (
-                levels is not None
-            ), "The number of hierarchical levels in the region model must be provided"
+        if region_model or bounding_area_path != os.path.join(
+            "data", "cutouts", "world.geojson",
+        ):
+            if region_model:
+                assert (
+                    levels is not None
+                ), "The number of hierarchical levels in the region model must be provided"
+            else:
+                region_model = os.path.join(
+                    Path(package_directory).parent,
+                    "data",
+                    "communities_-1__with_distance_multi-level_geonames_cities_7.csv",
+                )
+                levels = 4
             print(
                 "Initializing with data from provided region model. This operation may take some time..."
             )
+
             data = read_csv(region_model)
             # Generate communities for hierarchical levels 1-4
             communities_by_level = {
-                i: get_communities(data, i) for i in range(1, levels)
+                i: get_communities(data, i) for i in range(1, levels + 1)
             }
             self.regions_serialized = {}
             for level, communities in communities_by_level.items():
@@ -77,12 +93,9 @@ class TravelRegions:
                         outlier_indices = [outliers_z_score[0][0]]
                     else:
                         outlier_indices = []
-                    # XXX Save each node as object not list. With coords in
-                    # field {"latlng": [<lat>, <lng>]}
-                    # XXX Do something about the empty lists (i.e. nodes) in the output!
                     nonoutliers_by_community += [
                         [
-                            node[1]
+                            {"id": node[1][0], "latlng": [node[1][8], node[1][9]]}
                             for node in enumerate(community_nodes)
                             if node[0] not in outlier_indices
                         ]
@@ -94,9 +107,7 @@ class TravelRegions:
                 #####################
                 # Generate polygons #
                 #####################
-                bounding_area = read_geo_json(
-                    os.path.join("data", "cutouts", "world.geojson",)
-                )
+                bounding_area = read_geo_json(bounding_area_path)
                 bounding_area = list(
                     map(
                         lambda point: [point[1], point[0]],
@@ -110,7 +121,7 @@ class TravelRegions:
                     for community_nonoutlier in community_nonoutliers
                 ]
                 nonoutliers_latlng = [
-                    (float(nonoutlier[-3]), float(nonoutlier[-2]))
+                    (float(nonoutlier["latlng"][0]), float(nonoutlier["latlng"][1]))
                     for nonoutlier in nonoutliers
                 ]
                 voronoi_clusters = generate_constrained_voronoi_diagram(
@@ -120,6 +131,21 @@ class TravelRegions:
                     *voronoi_clusters
                 )  # For each cluster, unifies the cluster's single-point voronoi regions into a single polygon
                 region_geometries = extract_geometries(*merged_voronoi_clusters)
+
+                # Remove communities lying outside of bounding area
+                included_community_IDs = []
+                included_region_geometries = []
+                included_nonoutliers_by_community = []
+                for i in range(len(community_IDs)):
+                    if region_geometries[i]:
+                        included_community_IDs.append(community_IDs[i])
+                        included_region_geometries.append(region_geometries[i])
+                        included_nonoutliers_by_community.append(
+                            nonoutliers_by_community[i]
+                        )
+                community_IDs = included_community_IDs
+                region_geometries = included_region_geometries
+                nonoutliers_by_community = included_nonoutliers_by_community
 
                 # Generate region file JSON dump
                 self.regions_serialized[level] = {
@@ -174,7 +200,7 @@ class TravelRegions:
             for i in range(len(geometries)):
                 region_nodes = []
                 for region_node_serialized in region_nodes_serialized[i]:
-                    region_nodes.append(self.nodes[region_node_serialized[0]])
+                    region_nodes.append(self.nodes[region_node_serialized["id"]])
                 regions.append(
                     Region(
                         hierarchical_level,

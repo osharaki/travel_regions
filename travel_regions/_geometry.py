@@ -60,6 +60,7 @@ def generate_constrained_voronoi_diagram(
     for p in coords:  # converts to shapely Point
         if p.within(containing_area):
             contained_points.append(p)
+    points = points_to_coords(contained_points)
     poly_shapes, pts, poly_to_pt_assignments = voronoi_regions_from_coords(
         points, containing_area
     )
@@ -90,8 +91,13 @@ def merge_regions(
     """
     merged_regions = []
     for community_regions in voronoi_communities:
-        merged_region = cascaded_union(community_regions)
-        merged_regions.append(merged_region)
+        # cascaded_union() turns empty lists into objects of type GeometryCollection in the
+        # list of merged regions, which later raise an error in TravelRegions.extract_geometries
+        if community_regions:
+            merged_region = cascaded_union(community_regions)
+            merged_regions.append(merged_region)
+        else:
+            merged_regions.append([])
     return merged_regions
 
 
@@ -119,19 +125,22 @@ def extract_geometries(*shapely_polygons) -> List[Dict]:
     """
     geometries = []
     for polygon in shapely_polygons:
-        geometries.append(
-            {"type": "polygon", "geometry": list(zip(*polygon.exterior.coords.xy)),}
-            if not isinstance(polygon, geometry.MultiPolygon)
-            else {
-                "type": "multipolygon",
-                "geometry": list(
-                    map(
-                        lambda polygon: list(zip(*polygon.exterior.coords.xy)),
-                        list(polygon),
-                    )
-                ),
-            }
-        )
+        if polygon:
+            geometries.append(
+                {"type": "polygon", "geometry": list(zip(*polygon.exterior.coords.xy)),}
+                if not isinstance(polygon, geometry.MultiPolygon)
+                else {
+                    "type": "multipolygon",
+                    "geometry": list(
+                        map(
+                            lambda polygon: list(zip(*polygon.exterior.coords.xy)),
+                            list(polygon),
+                        )
+                    ),
+                }
+            )
+        else:
+            geometries.append({})
     return geometries
 
 
