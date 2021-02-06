@@ -25,9 +25,9 @@ package_directory = os.path.dirname(os.path.abspath(__file__))
 class TravelRegions:
     def __init__(
         self,
+        *bounding_area_paths: List[str],
         region_model: str = None,
         levels: int = None,
-        bounding_area_path: str = os.path.join("data", "cutouts", "world.geojson",),
     ):
         """
         A class representation of a region model
@@ -46,9 +46,7 @@ class TravelRegions:
         #######################
         # Extract communities #
         #######################
-        if region_model or bounding_area_path != os.path.join(
-            "data", "cutouts", "world.geojson",
-        ):
+        if region_model or bounding_area_paths:
             if region_model:
                 assert (
                     levels is not None
@@ -60,8 +58,12 @@ class TravelRegions:
                     "communities_-1__with_distance_multi-level_geonames_cities_7.csv",
                 )
                 levels = 4
+            if not bounding_area_paths:
+                bounding_area_paths = [
+                    os.path.join("data", "cutouts", "world.geojson",)
+                ]
             print(
-                "Initializing with data from provided region model. This operation may take some time..."
+                "Initializing travel regions with custom parameters. This operation may take some time..."
             )
 
             data = read_csv(region_model)
@@ -107,26 +109,43 @@ class TravelRegions:
                 #####################
                 # Generate polygons #
                 #####################
-                bounding_area = read_geo_json(bounding_area_path)
-                bounding_area = list(
-                    map(
-                        lambda point: [point[1], point[0]],
-                        bounding_area["geometry"]["coordinates"][0],
+                bounding_areas = []
+                voronoi_clusters_by_bounding_area = []
+                for bounding_area_path in bounding_area_paths:
+                    bounding_area = read_geo_json(bounding_area_path)
+                    bounding_area = list(
+                        map(
+                            lambda point: [point[1], point[0]],
+                            bounding_area["geometry"]["coordinates"][0],
+                        )
+                    )  # flipping coordinates for geovoronoi and Leaflet compatibility
+                    bounding_areas.append(bounding_area)
+                    bounding_area_shape = Polygon(bounding_area)
+                    nonoutliers = [
+                        community_nonoutlier
+                        for community_nonoutliers in nonoutliers_by_community
+                        for community_nonoutlier in community_nonoutliers
+                    ]  # ordered by community
+                    nonoutliers_latlng = [
+                        (float(nonoutlier["latlng"][0]), float(nonoutlier["latlng"][1]))
+                        for nonoutlier in nonoutliers
+                    ]
+                    voronoi_clusters_by_bounding_area.append(
+                        generate_constrained_voronoi_diagram(
+                            nonoutliers_latlng,
+                            bounding_area_shape,
+                            nonoutliers_by_community,
+                        )
                     )
-                )  # flipping coordinates for geovoronoi and Leaflet compatibility
-                bounding_area_shape = Polygon(bounding_area)
-                nonoutliers = [
-                    community_nonoutlier
-                    for community_nonoutliers in nonoutliers_by_community
-                    for community_nonoutlier in community_nonoutliers
-                ]
-                nonoutliers_latlng = [
-                    (float(nonoutlier["latlng"][0]), float(nonoutlier["latlng"][1]))
-                    for nonoutlier in nonoutliers
-                ]
-                voronoi_clusters = generate_constrained_voronoi_diagram(
-                    nonoutliers_latlng, bounding_area_shape, nonoutliers_by_community
-                )
+                voronoi_clusters = []
+                for i in range(len(community_IDs)):
+                    voronoi_clusters.append([])
+                    for j in range(len(voronoi_clusters_by_bounding_area)):
+                        voronoi_clusters[-1] += (
+                            voronoi_clusters_by_bounding_area[j][i]
+                            if len(voronoi_clusters_by_bounding_area[j]) > i
+                            else []
+                        )
                 merged_voronoi_clusters = merge_regions(
                     *voronoi_clusters
                 )  # For each cluster, unifies the cluster's single-point voronoi regions into a single polygon
@@ -136,12 +155,14 @@ class TravelRegions:
                 included_community_IDs = []
                 included_region_geometries = []
                 included_nonoutliers_by_community = []
-                for i in range(len(community_IDs)):
-                    if region_geometries[i]:
-                        included_community_IDs.append(community_IDs[i])
-                        included_region_geometries.append(region_geometries[i])
+                for community_ID in community_IDs:
+                    if region_geometries[community_ID]:
+                        included_community_IDs.append(community_ID)
+                        included_region_geometries.append(
+                            region_geometries[community_ID]
+                        )
                         included_nonoutliers_by_community.append(
-                            nonoutliers_by_community[i]
+                            nonoutliers_by_community[community_ID]
                         )
                 community_IDs = included_community_IDs
                 region_geometries = included_region_geometries
@@ -151,7 +172,7 @@ class TravelRegions:
                 self.regions_serialized[level] = {
                     "level": level,
                     "community_IDs": community_IDs,
-                    "bounding_area": bounding_area,
+                    "bounding_area": bounding_areas,
                     "geometries": region_geometries,
                     "nodes": nonoutliers_by_community,
                     "outliers": outliers,
