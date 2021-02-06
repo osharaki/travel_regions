@@ -8,6 +8,7 @@ from fuzzysearch import find_near_matches
 from haversine import haversine
 from pycountry_convert import *
 import os
+from geovoronoi import coords_to_points
 
 from ._map_features import Node, Region
 from ._geometry import (
@@ -73,44 +74,24 @@ class TravelRegions:
             }
             self.regions_serialized = {}
             for level, communities in communities_by_level.items():
+                # DEBUG Remove this
+                if level != 3:
+                    continue
                 community_IDs = list(communities.keys())
 
                 #####################
                 # Outlier detection #
                 #####################
-                nonoutliers_by_community = []
                 outliers = []
-                for community in communities.values():
-                    community_nodes = [point for point in community]
-                    outliers_z_score = detect_outliers_z_score(
-                        [
-                            (float(node[-3]), float(node[-2]))
-                            for node in community_nodes
-                        ],
-                        threshold=3,
-                    )
-                    if len(outliers_z_score) > 1:
-                        outlier_indices, _ = zip(*outliers_z_score)
-                    elif len(outliers_z_score) > 0:
-                        outlier_indices = [outliers_z_score[0][0]]
-                    else:
-                        outlier_indices = []
-                    nonoutliers_by_community += [
-                        [
-                            {"id": node[1][0], "latlng": [node[1][8], node[1][9]]}
-                            for node in enumerate(community_nodes)
-                            if node[0] not in outlier_indices
-                        ]
-                    ]
-                    outliers.append(
-                        [community_nodes[index] for index in outlier_indices]
-                    )
 
                 #####################
                 # Generate polygons #
                 #####################
                 bounding_areas = []
                 voronoi_clusters_by_bounding_area = []
+                nonoutliers_by_community_combined = [
+                    [] for _ in range(len(communities))
+                ]
                 for bounding_area_path in bounding_area_paths:
                     bounding_area = read_geo_json(bounding_area_path)
                     bounding_area = list(
@@ -121,6 +102,41 @@ class TravelRegions:
                     )  # flipping coordinates for geovoronoi and Leaflet compatibility
                     bounding_areas.append(bounding_area)
                     bounding_area_shape = Polygon(bounding_area)
+
+                    nonoutliers_by_community = []
+                    for community in communities.values():
+                        community_nodes = [point for point in community]
+                        outliers_z_score = detect_outliers_z_score(
+                            [
+                                (float(node[-3]), float(node[-2]))
+                                for node in community_nodes
+                            ],
+                            threshold=3,
+                        )
+                        if len(outliers_z_score) > 1:
+                            outlier_indices, _ = zip(*outliers_z_score)
+                        elif len(outliers_z_score) > 0:
+                            outlier_indices = [outliers_z_score[0][0]]
+                        else:
+                            outlier_indices = []
+                        nonoutliers_by_community += [
+                            [
+                                {"id": node[1][0], "latlng": [node[1][8], node[1][9]]}
+                                for node in enumerate(community_nodes)
+                                if node[0] not in outlier_indices
+                                and coords_to_points(
+                                    [[float(node[1][8]), float(node[1][9])]]
+                                )[0].within(bounding_area_shape)
+                            ]
+                        ]
+
+                        outliers.append(
+                            [community_nodes[index] for index in outlier_indices]
+                        )
+                    for i in range(len(nonoutliers_by_community)):
+                        nonoutliers_by_community_combined[
+                            i
+                        ] += nonoutliers_by_community[i]
                     nonoutliers = [
                         community_nonoutlier
                         for community_nonoutliers in nonoutliers_by_community
@@ -151,30 +167,13 @@ class TravelRegions:
                 )  # For each cluster, unifies the cluster's single-point voronoi regions into a single polygon
                 region_geometries = extract_geometries(*merged_voronoi_clusters)
 
-                # Remove communities lying outside of bounding area
-                included_community_IDs = []
-                included_region_geometries = []
-                included_nonoutliers_by_community = []
-                for community_ID in community_IDs:
-                    if region_geometries[community_ID]:
-                        included_community_IDs.append(community_ID)
-                        included_region_geometries.append(
-                            region_geometries[community_ID]
-                        )
-                        included_nonoutliers_by_community.append(
-                            nonoutliers_by_community[community_ID]
-                        )
-                community_IDs = included_community_IDs
-                region_geometries = included_region_geometries
-                nonoutliers_by_community = included_nonoutliers_by_community
-
                 # Generate region file JSON dump
                 self.regions_serialized[level] = {
                     "level": level,
                     "community_IDs": community_IDs,
                     "bounding_area": bounding_areas,
                     "geometries": region_geometries,
-                    "nodes": nonoutliers_by_community,
+                    "nodes": nonoutliers_by_community_combined,
                     "outliers": outliers,
                 }
         else:
@@ -213,6 +212,9 @@ class TravelRegions:
         # Instantiate regions #
         #######################
         for level, regions_dump in self.regions_serialized.items():
+            # DEBUG Remove this
+            if level != 3:
+                continue
             regions = []
             hierarchical_level = regions_dump["level"]
             community_IDs = regions_dump["community_IDs"]

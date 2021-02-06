@@ -57,15 +57,9 @@ def generate_constrained_voronoi_diagram(
     coords = coords_to_points(points)
     # use only the points inside the geographic area
     contained_points = []
-    community_tracker = (
-        []
-    )  # HACK: Keeps track of which points aren't inside of the bounding area so that community associations can be maintained
     for p in coords:  # converts to shapely Point
         if p.within(containing_area):
             contained_points.append(p)
-            community_tracker.append(True)
-        else:
-            community_tracker.append(False)
     if len(contained_points) < 5:
         print("Bounding area must contain at least 4 nodes from region model")
         return []
@@ -75,16 +69,13 @@ def generate_constrained_voronoi_diagram(
     )
     if communities:
         polygons = []
-        pt_to_poly_assignments = [None] * len(community_tracker)
-        j = 0
-        for i, point_inside in enumerate(community_tracker):
-            if point_inside:
-                pt_to_poly_assignments[i] = poly_shapes[j]
-                j += 1
+        pt_to_poly_assignments = [None] * len(points)
+        for polygon, points_in_polygon in zip(poly_shapes, poly_to_pt_assignments):
+            pt_to_poly_assignments[points_in_polygon[0]] = polygon
         for i, c in enumerate(communities):
             start = end if i != 0 else 0
             end = start + len(communities[i])
-            polygons.append(list(filter(None, pt_to_poly_assignments[start:end])))
+            polygons.append(pt_to_poly_assignments[start:end])
         return polygons
     return poly_shapes
 
