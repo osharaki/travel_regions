@@ -61,7 +61,9 @@ class TravelRegions:
                 levels = 4
             if not bounding_area_paths:
                 bounding_area_paths = [
-                    os.path.join("data", "cutouts", "world.geojson",)
+                    os.path.join("data", "cutouts", "eu_af_as_au.geojson"),
+                    os.path.join("data", "cutouts", "americas.geojson"),
+                    os.path.join("data", "cutouts", "nz.geojson"),
                 ]
             print(
                 "Initializing travel regions with custom parameters. This operation may take some time..."
@@ -74,9 +76,6 @@ class TravelRegions:
             }
             self.regions_serialized = {}
             for level, communities in communities_by_level.items():
-                # DEBUG Remove this
-                if level != 3:
-                    continue
                 community_IDs = list(communities.keys())
 
                 #####################
@@ -212,26 +211,24 @@ class TravelRegions:
         # Instantiate regions #
         #######################
         for level, regions_dump in self.regions_serialized.items():
-            # DEBUG Remove this
-            if level != 3:
-                continue
             regions = []
             hierarchical_level = regions_dump["level"]
             community_IDs = regions_dump["community_IDs"]
             geometries = regions_dump["geometries"]
             region_nodes_serialized = regions_dump["nodes"]
             for i in range(len(geometries)):
-                region_nodes = []
-                for region_node_serialized in region_nodes_serialized[i]:
-                    region_nodes.append(self.nodes[region_node_serialized["id"]])
-                regions.append(
-                    Region(
-                        hierarchical_level,
-                        community_IDs[i],
-                        geometries[i],
-                        region_nodes,
+                if geometries[i]:
+                    region_nodes = []
+                    for region_node_serialized in region_nodes_serialized[i]:
+                        region_nodes.append(self.nodes[region_node_serialized["id"]])
+                    regions.append(
+                        Region(
+                            hierarchical_level,
+                            community_IDs[i],
+                            geometries[i],
+                            region_nodes,
+                        )
                     )
-                )
             self.regions[level] = regions
         if region_model:
             print("Initialization complete!")
@@ -384,7 +381,7 @@ class TravelRegions:
                     )
                     try:
                         country_continent = country_alpha2_to_continent_code(country)
-                        # FIXME Remove nested try/except and add a continue here
+                        # DEBUG Remove nested try/except and add a continue here
                         # Nested try/except was only added for development to see which country codes need to be handled
                     except KeyError:
                         try:
