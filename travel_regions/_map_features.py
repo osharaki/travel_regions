@@ -64,6 +64,9 @@ class Region:
         }
         return country_counts
 
+    # FIXME requiring a list of regions to be passed is awkward. Do away with
+    # this need by finding a way, from inside Region.get_neighbors(), to access all regions in the TravelRegion
+    # instance that are on this region's level.
     def get_neighbors(self, regions: List["Region"]) -> Set["Region"]:
         """
         Returns all regions whose geometries share at least one point with the calling region. This applies to both single and multi-polygon regions. For example, a multi-polygon region is considered another region's neighbor even if only one of its polygons shares at least one geometry point with that region.
