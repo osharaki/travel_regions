@@ -7,6 +7,7 @@ import unittest
 import os
 
 from travel_regions import TravelRegions
+import travel_regions
 
 
 class TestTravel_regions(unittest.TestCase):
@@ -15,43 +16,68 @@ class TestTravel_regions(unittest.TestCase):
     def setUp(self):
         """Set up test fixtures, if any."""
 
-        self.travel_regions_instances = [
-            TestTravel_regions.travel_regions_default,
-            TestTravel_regions.travel_regions_model,
-            TestTravel_regions.travel_regions_boundaries,
-            TestTravel_regions.travel_regions_model_boundaries,
-        ]
+        self.travel_regions_instances = list(
+            filter(None, TestTravel_regions.travel_regions_instances)
+        )
 
     @classmethod
     def setUpClass(cls):
         super(TestTravel_regions, cls).setUpClass()
-        cls.travel_regions_default = TravelRegions()
-        cls.travel_regions_model = TravelRegions(
-            region_model=os.path.join(
-                "data",
-                "communities_-1__with_distance_multi-level_geonames_cities_7.csv",
-            ),
-            levels=4,
+
+        # TravelRegions can be instantiated in one of 4 ways depending on which
+        # constructor parameters receive arguments. The following flags can be
+        # used to toggle which of the four instantiation methods to use when
+        # running testcases.
+        travel_regions_default = True
+        travel_regions_model = True
+        travel_regions_boundaries = True
+        travel_regions_model_boundaries = True
+
+        cls.travel_regions_default = TravelRegions() if travel_regions_default else None
+        cls.travel_regions_model = (
+            TravelRegions(
+                region_model=os.path.join(
+                    "data",
+                    "communities_-1__with_distance_multi-level_geonames_cities_7.csv",
+                ),
+                levels=4,
+            )
+            if travel_regions_model
+            else None
         )
-        cls.travel_regions_boundaries = TravelRegions(
-            *[
-                os.path.join("data", "cutouts", "eu_af_as_au.geojson"),
-                os.path.join("data", "cutouts", "americas.geojson"),
-                os.path.join("data", "cutouts", "nz.geojson"),
-            ]
+        cls.travel_regions_boundaries = (
+            TravelRegions(
+                *[
+                    os.path.join("data", "cutouts", "eu_af_as_au.geojson"),
+                    os.path.join("data", "cutouts", "americas.geojson"),
+                    os.path.join("data", "cutouts", "nz.geojson"),
+                ]
+            )
+            if travel_regions_boundaries
+            else None
         )
-        cls.travel_regions_model_boundaries = TravelRegions(
-            *[
-                os.path.join("data", "cutouts", "eu_af_as_au.geojson"),
-                os.path.join("data", "cutouts", "americas.geojson"),
-                os.path.join("data", "cutouts", "nz.geojson"),
-            ],
-            region_model=os.path.join(
-                "data",
-                "communities_-1__with_distance_multi-level_geonames_cities_7.csv",
-            ),
-            levels=4,
+        cls.travel_regions_model_boundaries = (
+            TravelRegions(
+                *[
+                    os.path.join("data", "cutouts", "eu_af_as_au.geojson"),
+                    os.path.join("data", "cutouts", "americas.geojson"),
+                    os.path.join("data", "cutouts", "nz.geojson"),
+                ],
+                region_model=os.path.join(
+                    "data",
+                    "communities_-1__with_distance_multi-level_geonames_cities_7.csv",
+                ),
+                levels=4,
+            )
+            if travel_regions_model_boundaries
+            else None
         )
+        cls.travel_regions_instances = [
+            cls.travel_regions_default,
+            cls.travel_regions_model,
+            cls.travel_regions_boundaries,
+            cls.travel_regions_model_boundaries,
+        ]
 
     def tearDown(self):
         """Tear down test fixtures, if any."""
