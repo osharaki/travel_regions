@@ -4,28 +4,29 @@ administrative regions from Natural Earth Data shapefiles.
 """
 from ._file_utils import extract_shape
 from pathlib import Path
-from typing import List, Union
+from typing import List, Union, Dict
 import os
 from shapely.ops import transform
 from shapely import geometry
+from pycountry_convert import country_alpha2_to_country_name
 
 
 def get_admin_regions(
     country_alpha_2: str,
-) -> Union[List[geometry.Polygon], List[geometry.MultiPolygon]]:
+) -> Dict[str, Union[geometry.Polygon, geometry.MultiPolygon]]:
     """
-    Returns a country's geometry or that of its top-level administrative regions
-    (e.g. states or provinces) depending on the `level` specified.
+    Returns a country's geometry and that of its top-level administrative
+    regions (e.g. states or provinces).
 
-    Args: country_alpha_2 (str): Two-letter country code as defined in ISO
-        3166-1
+    Args: country_alpha_2 (str): Two-letter country code (i.e. alpha-2) as
+        defined in ISO 3166-1
 
-    Raises: Exception: An exception is raised if the provided alpha-2 country
-        code did not yield any results.
+    Raises: Exception: An exception is raised if no country was found that
+    corresponds to the provided ISO 3166-1 alpha-2 code.
 
-    Returns: Union[List[geometry.Polygon],List[geometry.MultiPolygon]]: The
-        geometries of both the country (at position 0) and its top-level
-        administrative regions.
+    Returns: Dict[str, Union[geometry.Polygon, geometry.MultiPolygon]]: The
+        geometries of the country and its top-level administrative regions as a
+        name:geometry mapping.
     """
     package_directory = os.path.dirname(os.path.abspath(__file__))
     NED_admin1 = extract_shape(
@@ -34,16 +35,21 @@ def get_admin_regions(
         ),
         country_alpha_2,
     )
-    # TODO Administrative regions should be identifiable by name
     if not NED_admin1.empty:
-        regions = [transform(lambda x, y: (y, x), NED_admin1.geometry.cascaded_union)]
+        regions = {
+            country_alpha2_to_country_name(country_alpha_2.upper()): transform(
+                lambda x, y: (y, x), NED_admin1.geometry.cascaded_union
+            )
+        }
         for region in NED_admin1.gn_name.values:
-            region = NED_admin1[NED_admin1.gn_name == region].geometry.cascaded_union
-            region = transform(lambda x, y: (y, x), region)
-            regions.append(region)
+            region_geom = NED_admin1[
+                NED_admin1.gn_name == region
+            ].geometry.cascaded_union
+            region_geom = transform(lambda x, y: (y, x), region_geom)
+            regions[region] = region_geom
         return regions
 
     else:
         raise Exception(
-            f'No country with code "{country_alpha_2}" found. Country code must be 2 letters as specified by ISO 3166-1 alpha-2'
+            f'No country with ISO 3166-1 alpha-2 code "{country_alpha_2}" found.'
         )
