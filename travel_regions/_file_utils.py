@@ -111,12 +111,9 @@ def read_geo_json(path):
 #######################
 def extract_shape(path, name):
     shapefile = gpd.read_file(path)
-    # portion = shapefile.loc[shapefile['SOV0NAME']=='India']
-    # print(shapefile)
-    portion = shapefile.loc[shapefile["name_en"] == name]
-    # print(shapefile['name_en'].values.tolist())
+    name = name.upper()
+    portion = shapefile.loc[shapefile["iso_a2"] == name]
     return portion
-    # portion.plot(figsize=(10, 3))
 
 
 def poly_to_shp(polygons, target):
