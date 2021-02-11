@@ -115,7 +115,17 @@ def plot_polygon(polygon, figure):
     return figure
 
 
-# Convert Shapely regions to list coordinates
+def geometry_to_shapely(serialized_geometry: Dict):
+    return (
+        geometry.Polygon(serialized_geometry["geometry"])
+        if serialized_geometry["type"] == "polygon"
+        else geometry.MultiPolygon(
+            [geometry.Polygon(geom) for geom in serialized_geometry["geometry"]]
+        )
+    )
+
+
+# FIXME Rename to shapely_to_geometry()
 def extract_geometries(*shapely_polygons) -> List[Dict]:
     """
     Given one or more Shapely polygons/multipolygons, extracts their geometries as lists of coordinates.
