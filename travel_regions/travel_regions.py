@@ -1,7 +1,7 @@
 import json
 import os
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Union
 from shapely.geometry.multipolygon import MultiPolygon
 from shapely.geometry.polygon import Polygon
 from fuzzysearch import find_near_matches
@@ -17,6 +17,7 @@ from ._geometry import (
     generate_constrained_voronoi_diagram,
     merge_regions,
     detect_outliers_z_score,
+    geometry_to_shapely,
 )
 from ._file_utils import get_communities, read_csv, read_geo_json
 
@@ -445,3 +446,29 @@ class TravelRegions:
         classifications = classify_points(points, region_geometries)
         return {regions[index].id: points for index, points in classifications.items()}
 
+    def compare_overlap(
+        self, level: int, area: Union[Polygon, MultiPolygon]
+    ) -> Dict[str, float]:
+        """
+        Finds the travel regions that overlap with a given area as well as the
+        degrees to which they overlap as a percentage of each travel region's
+        surface area.
+
+        Args: 
+            level (int): The hierarchical level at which to search for
+                overlapping travel regions 
+            area (Union[Polygon, MultiPolygon]): A
+                Shapely Polygon or MultiPolygon describing the area's geometry
+
+        Returns: Dict[str, float]: A dict that maps IDs of overlapping regions to
+            their degrees of overlap as percentages
+        """
+        overlapping_regions = {}
+        for region in self.regions[level]:
+            region_geom = geometry_to_shapely(
+                region.geometry
+            )  # Convert geometry to Shapely Polygons/MultiPolygons
+            overlap = (region_geom.intersection(area).area / region_geom.area) * 100
+            if overlap != 0:
+                overlapping_regions[region.id] = overlap
+        return overlapping_regions
