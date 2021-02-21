@@ -30,6 +30,8 @@ class TravelRegions:
         *bounding_area_paths: List[str],
         region_model: str = None,
         levels: int = None,
+        region_node_threshold: int = 10,
+        z_score_threshold: int = 4,
     ):
         """
         A class representation of a region model
@@ -40,6 +42,10 @@ class TravelRegions:
                 the expected file structure. Defaults to None.
             levels (int, optional): The number of hierarchical levels in the
                 region model. Defaults to None.
+            region_nodes_threshold (int): The minimum number of nodes a region
+                needs to have to be included in the travel region model.
+            z_score_threshold (int): Controls how far away nodes are allowed to
+                be from the centers of their communities without being considered outliers.
         """
         self.nodes = {}
         self.regions = {}
@@ -111,7 +117,7 @@ class TravelRegions:
                                 (float(node[-3]), float(node[-2]))
                                 for node in community_nodes
                             ],
-                            threshold=3,
+                            z_score_threshold,
                         )
                         if len(outliers_z_score) > 1:
                             outlier_indices, _ = zip(*outliers_z_score)
@@ -222,14 +228,15 @@ class TravelRegions:
                     region_nodes = []
                     for region_node_serialized in region_nodes_serialized[i]:
                         region_nodes.append(self.nodes[region_node_serialized["id"]])
-                    regions.append(
-                        Region(
-                            hierarchical_level,
-                            community_IDs[i],
-                            geometries[i],
-                            region_nodes,
+                    if len(region_nodes) >= region_node_threshold:
+                        regions.append(
+                            Region(
+                                hierarchical_level,
+                                community_IDs[i],
+                                geometries[i],
+                                region_nodes,
+                            )
                         )
-                    )
             self.regions[level] = regions
         if region_model:
             print("Initialization complete!")
@@ -243,6 +250,8 @@ class TravelRegions:
             path (str): Target location in the file system where the region file
                 is to be saved (must include filename). For example,
                 ``path/to/file/my_l2_regions.json``
+            region_ids (List[int], optional): An optional list of region IDs if
+                only select regions are to be exported. Defaults to [].
         """
         with open(path, "w") as f:
             if regions_ids:
@@ -448,7 +457,7 @@ class TravelRegions:
 
     def compare_overlap(
         self, level: int, area: Union[Polygon, MultiPolygon]
-    ) -> Dict[str, float]:
+    ) -> Dict[str, Tuple[float, float]]:
         """
         Finds the travel regions that overlap with a given area as well as the
         degrees to which they overlap as a percentage of each travel region's
@@ -460,15 +469,25 @@ class TravelRegions:
             area (Union[Polygon, MultiPolygon]): A
                 Shapely Polygon or MultiPolygon describing the area's geometry
 
-        Returns: Dict[str, float]: A dict that maps IDs of overlapping regions to
-            their degrees of overlap as percentages
+        Returns: Dict[str, tuple[float, float]]: A dict that maps IDs of regions
+            overlapping with the given area to a tuple whose first element is the
+            intersection of the two as a percentage of the region and whose second
+            element is the intersection as a percentage of the area.
         """
         overlapping_regions = {}
         for region in self.regions[level]:
             region_geom = geometry_to_shapely(
                 region.geometry
             )  # Convert geometry to Shapely Polygons/MultiPolygons
-            overlap = (region_geom.intersection(area).area / region_geom.area) * 100
-            if overlap != 0:
-                overlapping_regions[region.id] = overlap
+            intersection_as_region_percentage = (
+                region_geom.intersection(area).area / region_geom.area
+            ) * 100
+            intersection_as_area_percentage = (
+                area.intersection(region_geom).area / area.area
+            ) * 100
+            if intersection_as_region_percentage != 0:
+                overlapping_regions[region.id] = (
+                    intersection_as_region_percentage,
+                    intersection_as_area_percentage,
+                )
         return overlapping_regions
