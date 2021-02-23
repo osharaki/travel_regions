@@ -363,7 +363,7 @@ class TravelRegions:
             name (str): Location name
 
         Returns:
-            List[Node]: All nodes whose names fulfill the matching criterea
+            List[Node]: All nodes whose names fulfill the matching criteria
         """
         hits = []
         for node in self.nodes.values():
@@ -456,12 +456,16 @@ class TravelRegions:
         return {regions[index].id: points for index, points in classifications.items()}
 
     def compare_overlap(
-        self, level: int, area: Union[Polygon, MultiPolygon]
+        self,
+        level: int,
+        area: Union[Polygon, MultiPolygon],
+        overlap_threshold: int = 10,
     ) -> Dict[str, Tuple[float, float]]:
         """
         Finds the travel regions that overlap with a given area as well as the
-        degrees to which they overlap as a percentage of each travel region's
-        surface area.
+        degrees to which they overlap as a percentage of each travel
+        region's area
+        and as a percentage of the target area itself.
 
         Args: 
             level (int): The hierarchical level at which to search for
@@ -485,7 +489,7 @@ class TravelRegions:
             intersection_as_area_percentage = (
                 area.intersection(region_geom).area / area.area
             ) * 100
-            if intersection_as_region_percentage != 0:
+            if intersection_as_area_percentage >= overlap_threshold:
                 overlapping_regions[region.id] = (
                     intersection_as_region_percentage,
                     intersection_as_area_percentage,
