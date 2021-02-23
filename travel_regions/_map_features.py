@@ -5,6 +5,7 @@ from shapely.geometry import Polygon
 from collections import Counter
 
 import pycountry
+from pycountry_convert import country_alpha2_to_continent_code
 
 
 class Node:
@@ -15,6 +16,26 @@ class Node:
         self.name = name
         self.latlng = latlng
         self.country = country
+        continent_codes = {
+            "SA": "South America",
+            "NA": "North America",
+            "EU": "Europe",
+            "AS": "Asia",
+            "AF": "Africa",
+            "OC": "Oceania",
+            "AN": "Antarctica",
+        }
+        try:
+            self.continent = continent_codes[
+                country_alpha2_to_continent_code(self.country)
+            ]
+        except KeyError:
+            try:
+                self.continent = continent_codes[
+                    {"EH": "AF", "VA": "EU", "PN": "OC"}[self.country]
+                ]
+            except KeyError:
+                self.continent = None
         self.regions: Dict[int, Region] = {}
 
 
