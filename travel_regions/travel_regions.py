@@ -47,6 +47,7 @@ class TravelRegions:
             z_score_threshold (int): Controls how far away nodes are allowed to
                 be from the centers of their communities without being considered outliers.
         """
+        self.z_score_threshold = z_score_threshold
         self.nodes = {}
         self.regions = {}
         self.regions_serialized = {}
@@ -241,7 +242,7 @@ class TravelRegions:
         if region_model:
             print("Initialization complete!")
 
-    def export_regions(self, level: int, path: str, regions_ids: List[int] = []):
+    def export_regions(self, path: str, regions_ids: List[int] = [], level: int = None):
         """
         Generates a region file for the specified hierarchical level
 
@@ -257,6 +258,7 @@ class TravelRegions:
             if regions_ids:
                 regions_serialized = {
                     "level": level,
+                    "z_score_threshold": self.z_score_threshold,
                     "community_IDs": [],
                     "bounding_area": [],
                     "geometries": [],
@@ -272,6 +274,9 @@ class TravelRegions:
                     )
                 json.dump(regions_serialized, f, indent=4)
             else:
+                assert (
+                    level is not None
+                ), "A hierarchical level must be provided if no regions are specified"
                 json.dump(self.regions_serialized[level], f, indent=4)
 
     def get_region(self, id: str) -> Region:
