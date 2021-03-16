@@ -1,3 +1,6 @@
+"""
+Defines the classes Region and Node.
+"""
 from typing import *
 
 from shapely.geometry import Polygon
