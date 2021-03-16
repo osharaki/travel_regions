@@ -29,9 +29,9 @@ class TestTravel_regions(unittest.TestCase):
         # used to toggle which of the four instantiation methods to use when
         # running testcases.
         travel_regions_default = True
-        travel_regions_model = True
-        travel_regions_boundaries = True
-        travel_regions_model_boundaries = True
+        travel_regions_model = False
+        travel_regions_boundaries = False
+        travel_regions_model_boundaries = False
 
         cls.travel_regions_default = TravelRegions() if travel_regions_default else None
         cls.travel_regions_model = (
@@ -102,7 +102,7 @@ class TestTravel_regions(unittest.TestCase):
                     region_IDs.append(k)
             self.assertIsNotNone(region_mappings)
             self.assertEqual(
-                set(["10", "22", "26", "24", "356", "3154", "3113", "40", "415"]),
+                set(["10", "22", "26", "24", "3154", "3113", "40", "415"]),
                 set(region_IDs),
             )
 
@@ -120,7 +120,7 @@ class TestTravel_regions(unittest.TestCase):
     def test_get_country_regions(self):
         for travel_regions in self.travel_regions_instances:
             DE_regions = travel_regions.get_country_regions("de", 3)
-            self.assertEqual(len(DE_regions), 974)
+            self.assertEqual(len(DE_regions), 893)
             self.assertTrue(
                 all(
                     [
@@ -134,7 +134,7 @@ class TestTravel_regions(unittest.TestCase):
         for travel_regions in self.travel_regions_instances:
             regions_south_america = travel_regions.get_continent_regions("SA")
             self.assertIsNotNone(regions_south_america)
-            self.assertEqual(len(regions_south_america), 224)
+            self.assertEqual(len(regions_south_america), 89)
 
     def test_find_node(self):
         for travel_regions in self.travel_regions_instances:
@@ -170,6 +170,6 @@ class TestTravel_regions(unittest.TestCase):
             matching_regions = travel_regions.find_region(["Paraguay", "Brazil"])
             self.assertIsNotNone(matching_regions)
             self.assertEqual(
-                set(["415", "3100", "10", "384", "22", "23", "49"]),
+                set(["415", "10", "22", "23", "49"]),
                 set([matching_region.id for matching_region in matching_regions]),
             )
