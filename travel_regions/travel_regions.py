@@ -25,6 +25,20 @@ package_directory = os.path.dirname(os.path.abspath(__file__))
 
 
 class TravelRegions:
+    """
+    A class representation of a region model
+
+    Args:
+        region_model (str, optional): Path to a custom region model if one
+            should be used instead of the default. Defaults to None.
+        levels (int, optional): The number of hierarchical levels in the
+            region model. Defaults to None.
+        region_node_threshold (int): The minimum number of nodes a region
+            needs to have to be included in the travel region model.
+        z_score_threshold (int): Controls how far away nodes are allowed to
+            be from the centers of their communities without being considered outliers.
+    """
+
     def __init__(
         self,
         *bounding_area_paths: List[str],
@@ -33,19 +47,6 @@ class TravelRegions:
         region_node_threshold: int = 10,
         z_score_threshold: int = 4,
     ):
-        """
-        A class representation of a region model
-
-        Args:
-            region_model (str, optional): Path to a custom region model if one
-                should be used instead of the default. Defaults to None.
-            levels (int, optional): The number of hierarchical levels in the
-                region model. Defaults to None.
-            region_node_threshold (int): The minimum number of nodes a region
-                needs to have to be included in the travel region model.
-            z_score_threshold (int): Controls how far away nodes are allowed to
-                be from the centers of their communities without being considered outliers.
-        """
         self.z_score_threshold = z_score_threshold
         self.region_node_threshold = region_node_threshold
         self.nodes = {}
