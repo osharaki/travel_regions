@@ -37,9 +37,8 @@ class TravelRegions:
         A class representation of a region model
 
         Args:
-            TODO region_model (str, optional): Path to a custom region model if one
-                should be used instead of the default. See ____ for a reference of
-                the expected file structure. Defaults to None.
+            region_model (str, optional): Path to a custom region model if one
+                should be used instead of the default. Defaults to None.
             levels (int, optional): The number of hierarchical levels in the
                 region model. Defaults to None.
             region_node_threshold (int): The minimum number of nodes a region
@@ -398,8 +397,6 @@ class TravelRegions:
                     )
                     try:
                         country_continent = country_alpha2_to_continent_code(country)
-                        # DEBUG Remove nested try/except and add a continue here
-                        # Nested try/except was only added for development to see which country codes need to be handled
                     except KeyError:
                         try:
                             country_continent = {"EH": "AF", "VA": "EU", "PN": "OC"}[
