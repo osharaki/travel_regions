@@ -1,3 +1,6 @@
+"""
+Functions for geometric operations including outlier detection, polygon generation, format conversion, and more.
+"""
 # http://blog.thehumangeo.com/2014/05/12/drawing-boundaries-in-python/
 from typing import Dict, List, Tuple, Union
 from haversine import haversine
@@ -17,16 +20,8 @@ from geovoronoi import voronoi_regions_from_coords, coords_to_points, points_to_
 from shapely.ops import cascaded_union
 
 
-def generate_concave_hull(points: List[Tuple[float, float]], visualize=False):
-    start = time.time()
+def generate_concave_hull(points: List[Tuple[float, float]]):
     alpha_shape = alphashape.alphashape(points)
-    fig, ax = pl.subplots()
-    ax.scatter(*zip(*points))
-    ax.add_patch(PolygonPatch(alpha_shape, alpha=0.2))
-    end = time.time()
-    print(f"Elapsed time: {end-start}")
-    if visualize:
-        pl.show()
     return list(zip(*alpha_shape.exterior.coords.xy))
 
 
@@ -173,7 +168,7 @@ def detect_outliers_z_score(data, threshold=3) -> List[Tuple[int, float]]:
     centroid = find_centroid(data)
     distances_from_center = [haversine(point, centroid) for point in data]
     with np.errstate(invalid="ignore", divide="ignore"):
-        z_scores: float = stats.zscore(distances_from_center)
+        z_scores = stats.zscore(distances_from_center)
     outliers: List[Tuple[int, float]] = list(
         filter(lambda x: abs(x[1]) > threshold, enumerate(z_scores))
     )
