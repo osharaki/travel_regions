@@ -488,19 +488,10 @@ class TravelRegions:
             region_geom = geometry_to_shapely(
                 region.geometry
             )  # Convert geometry to Shapely Polygons/MultiPolygons
-            intersection_as_region_percentage = (
-                region_geom.intersection(area).area / region_geom.area
-            ) * 100
-            intersection_as_area_percentage = (
-                area.intersection(region_geom).area / area.area
-            ) * 100
-            if not overlap_threshold:
-                if intersection_as_area_percentage > 0:
-                    overlapping_regions[region.id] = (
-                        intersection_as_region_percentage,
-                        intersection_as_area_percentage,
-                    )
-            elif intersection_as_area_percentage >= overlap_threshold:
+            intersection = region_geom.intersection(area).area
+            intersection_as_region_percentage = (intersection / region_geom.area) * 100
+            intersection_as_area_percentage = (intersection / area.area) * 100
+            if intersection > 0:
                 overlapping_regions[region.id] = (
                     intersection_as_region_percentage,
                     intersection_as_area_percentage,
