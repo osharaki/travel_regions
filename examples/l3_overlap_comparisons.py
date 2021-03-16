@@ -1,9 +1,8 @@
 """
-An example that finds all L3 travel regions overlapping with Germany and the
+An example that finds all L3 travel regions overlapping with Germany/Bavaria and the
 nodes they contain organized by country
 """
 
-from travel_regions._geometry import extract_geometries
 from travel_regions.admin_regions import get_country_codes, get_admin_region_geoms
 from travel_regions import TravelRegions
 import os

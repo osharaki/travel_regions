@@ -2,7 +2,6 @@
 An example showcasing overlap comparisons between L1 regions and continents
 """
 
-from travel_regions._geometry import *
 from travel_regions import TravelRegions
 import os
 from shapely.ops import transform
