@@ -109,10 +109,25 @@ def read_geo_json(path):
 #######################
 # Shapefile utilities #
 #######################
-def extract_shape(path, name):
+def extract_shape(path: str, name: str, key="iso_a2"):
+    """
+    Opens a shapefile as a geopandas dataframe and retrieves a specific row's data.
+
+    Args:
+        path (str): File system path or URL to a shapefile.
+        name (str): Name of the entity whose shape is to be retrieved, e.g.
+        country state.
+        key (str, optional): Column header in the dataframe containing the name.
+        This value will differ by shapefile, so it's a good idea to inspect the
+        dataframe at hand via ``geopandas.read_file()``
+        before calling this function. Defaults to "iso_a2".
+
+    Returns:
+        [type]: [description]
+    """
     shapefile = gpd.read_file(path)
     name = name.upper()
-    portion = shapefile.loc[shapefile["iso_a2"] == name]
+    portion = shapefile.loc[shapefile[key] == name]
     return portion
 
 
