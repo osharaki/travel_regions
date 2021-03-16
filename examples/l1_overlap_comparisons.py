@@ -22,7 +22,7 @@ level = 1
 overlap_threshold = 10
 overlapping_regions = travel_regions.compare_overlap(level, continent_geometry)
 
-# TODO Decide whether to treat overlap threshold as percentage of region or as percentage
+# TODO Decide whether threshold applies to overlap as percentage of region or as percentage
 # of continent, by commenting out the corresponding statement
 overlapping_regions = {
     k: v for k, v in overlapping_regions.items() if v[1] >= overlap_threshold
