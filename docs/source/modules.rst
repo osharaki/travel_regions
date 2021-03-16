@@ -1,12 +1,7 @@
-src
-===
+travel_regions
+==============
 
 .. toctree::
    :maxdepth: 4
 
-   main
-   node
-   outliers
-   polygons
-   region
-   regions
+   travel_regions
