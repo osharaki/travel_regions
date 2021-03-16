@@ -42,7 +42,7 @@ class TravelRegions:
                 the expected file structure. Defaults to None.
             levels (int, optional): The number of hierarchical levels in the
                 region model. Defaults to None.
-            region_nodes_threshold (int): The minimum number of nodes a region
+            region_node_threshold (int): The minimum number of nodes a region
                 needs to have to be included in the travel region model.
             z_score_threshold (int): Controls how far away nodes are allowed to
                 be from the centers of their communities without being considered outliers.
@@ -464,7 +464,7 @@ class TravelRegions:
         self,
         level: int,
         area: Union[Polygon, MultiPolygon],
-        overlap_threshold: int = 10,
+        overlap_threshold: int = None,
     ) -> Dict[str, Tuple[float, float]]:
         """
         Finds the travel regions that overlap with a given area as well as the
@@ -494,7 +494,13 @@ class TravelRegions:
             intersection_as_area_percentage = (
                 area.intersection(region_geom).area / area.area
             ) * 100
-            if intersection_as_area_percentage >= overlap_threshold:
+            if not overlap_threshold:
+                if intersection_as_area_percentage > 0:
+                    overlapping_regions[region.id] = (
+                        intersection_as_region_percentage,
+                        intersection_as_area_percentage,
+                    )
+            elif intersection_as_area_percentage >= overlap_threshold:
                 overlapping_regions[region.id] = (
                     intersection_as_region_percentage,
                     intersection_as_area_percentage,
