@@ -34,7 +34,7 @@ model](/data/communities_-1__with_distance_multi-level_geonames_cities_7.csv).
 
 The serialized class representation of any region model can be exported as a region file
 for a specific hierarchical level by
-calling the [`export_regions()`](src/regions.py#L180-L191) method of `TravelRegions`.
+calling the [`export_regions()`](travel_regions/travel_regions.py#L246-282) method of `TravelRegions`.
 
 ## Visualization
 
