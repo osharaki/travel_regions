@@ -15,7 +15,7 @@ import pycountry
 def get_country_codes(identifier: str) -> "pycountry.db.Country":
     """
     Given a country's "common" name, returns an object containing all its codes
-    as attributes. These are ``alpha-2``, ``alpha-3``, ``name``, ``numeric``,
+    as attributes. These are ``alpha_2``, ``alpha_3``, ``name``, ``numeric``,
     and ``official_name``.
 
     Args:
