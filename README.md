@@ -21,7 +21,7 @@ representations, following a standardized structure, of an instance of
 TravelRegions at a specific hierarchical level.
 
 Four region files for the first four hierarchical levels of the default [region
-model](/data/communities_-1__with_distance_multi-level_geonames_cities_7) are already available
+model](/data/communities_-1__with_distance_multi-level_geonames_cities_7.csv) are already available
 in [region_files](/data/region_files). These are what's used when
 `TravelRegions` is instantiated without any arguments (default instantiation).
 
@@ -30,7 +30,7 @@ If, however, a region model is provided, i.e.
 region model is used as a point of origin instead. For an example of how the CSV
 file representing a region model should be structured, refer to the [travel
 region
-model](/data/communities_-1__with_distance_multi-level_geonames_cities_7).
+model](/data/communities_-1__with_distance_multi-level_geonames_cities_7.csv).
 
 The serialized class representation of any region model can be exported as a region file
 for a specific hierarchical level by
