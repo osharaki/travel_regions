@@ -25,8 +25,13 @@ for node in travel_regions.nodes.values():
             country_nodes[country.name] = [node]
 
 level = 3
-regions_overlap = travel_regions.compare_overlap(level, de_admin_regions["Germany"])
-overlap_threshold = 2
+# TODO Decide whether to perform overlap comparison Germany or Bavaria by commenting out the corresponding statement
+""" regions_overlap = travel_regions.compare_overlap(level, de_admin_regions["Germany"])
+overlap_threshold = 2 """
+regions_overlap = travel_regions.compare_overlap(
+    level, de_admin_regions["Freistaat Bayern"]
+)
+overlap_threshold = 10
 
 # TODO Decide whether threshold applies to overlap as percentage of region or as percentage
 # of country, by commenting out the corresponding statement
