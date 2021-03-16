@@ -48,6 +48,7 @@ class TravelRegions:
                 be from the centers of their communities without being considered outliers.
         """
         self.z_score_threshold = z_score_threshold
+        self.region_node_threshold = region_node_threshold
         self.nodes = {}
         self.regions = {}
         self.regions_serialized = {}
@@ -259,6 +260,7 @@ class TravelRegions:
                 regions_serialized = {
                     "level": level,
                     "z_score_threshold": self.z_score_threshold,
+                    "region_node_threshold": self.region_node_threshold,
                     "community_IDs": [],
                     "bounding_area": [],
                     "geometries": [],
