@@ -38,4 +38,7 @@ calling the [`export_regions()`](travel_regions/travel_regions.py#L246-282) meth
 
 ## Visualization
 
-[Travel Regions Visualizer](https://github.com/osharaki/travel_regions_visualizer) is a simple JavaScript library built to interpret region files and visualize them using Leaflet.
+[Travel Regions
+Visualizer](https://github.com/osharaki/travel_regions_visualizer) is a simple
+JavaScript map tool built to interpret region files and visualize them using
+Leaflet.
